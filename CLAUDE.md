@@ -54,6 +54,7 @@ them first.
 - Husky + lint-staged to execute format/lint before every commit
 
 ## Coding conventions
+
 - Code should be easy to read and understand at a glance.
 - Prefer clear, straightforward code over clever or overly compact solutions.
 - Avoid nested ternary operators and extreme micro-optimizations that hurt readability without providing meaningful performance improvements.
@@ -80,12 +81,14 @@ them first.
 - Use PascalCase for component names and their folders (e.g. `components/StickyNote/StickyNote.tsx`). Use camelCase for hooks, utils, and services (e.g. `hooks/useDraggable.ts`).
 
 ## Error handling
+
 - Use `try/catch` around operations that can fail (network requests, parsing, external API calls, etc.).
 - When catching an error, throw a new error with a clear, semantic message that describes what operation failed and, when relevant, the context needed to debug it (e.g. an ID, a status code, or the input that caused the failure).
 - Avoid swallowing errors silently or re-throwing the original error without added context.
 - Error messages should help whoever reads the logs quickly understand what broke and where, not just that "something went wrong."
 
 ## Testing
+
 - Focus tests on user-facing behavior: what the user sees and does, not implementation details (e.g. internal state or private functions).
 - Write tests around user interactions (clicks, typing, navigation, form submission, etc.) to confirm the application actually works as expected from the user's perspective.
 - Avoid testing implementation details that would make tests brittle to refactors that don't change behavior.
@@ -95,6 +98,7 @@ them first.
 - (End-to-end testing conventions are not defined yet.)
 
 ## Folder structure
+
 - `services` — code responsible for external communication and persistence. In this project, that means the localStorage read/write and auto-save logic for notes. Components and hooks should go through `services` rather than calling `localStorage` directly.
 - `components` — React components.
 - `hooks` — custom hooks, one per file, named after the hook.
@@ -102,6 +106,7 @@ them first.
 - `tests` — all test files.
 
 ### Components folder
+
 - Each component gets its own folder inside `components`, named after the component.
 - Anything specific to that component lives inside its folder — for example its styles.
 - Style files should be CSS Modules named after the component: `ComponentName.module.scss`.
