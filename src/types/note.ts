@@ -30,6 +30,13 @@ export type NoteChanges = Partial<
   Pick<Note, 'position' | 'size' | 'color' | 'content'>
 >
 
+export interface ResizeBounds {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export interface CreateNoteResult {
   notes: Note[]
   note: Note
