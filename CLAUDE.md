@@ -79,6 +79,8 @@ them first.
 - Prefer relative imports over absolute/aliased imports.
 - Use React's built-in state APIs (`useState`, `useContext`, `useReducer`) for state management. Do not introduce a third-party state management library without discussing it first.
 - Use PascalCase for component names and their folders (e.g. `components/StickyNote/StickyNote.tsx`). Use camelCase for hooks, utils, and services (e.g. `hooks/useDraggable.ts`).
+- Use literal union types for fixed string values; when the values are also needed at runtime, define them with as const and derive the type from the constant.
+- Prefer defining a named type for complex or reusable types instead of using inline type expressions such as `Partial<Pick<...>>` directly in function parameters.
 
 ## Error handling
 

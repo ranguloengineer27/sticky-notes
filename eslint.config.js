@@ -20,5 +20,8 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      'preserve-caught-error': 'off',
+    },
   },
 ])
