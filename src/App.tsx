@@ -1,9 +1,5 @@
-function App() {
-  return (
-    <>
-      <h1>Sticky app code goes here</h1>
-    </>
-  )
-}
+import { Canvas } from './components/Canvas/Canvas'
 
-export default App
+export function App() {
+  return <Canvas />
+}

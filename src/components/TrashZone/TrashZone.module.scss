@@ -1,0 +1,26 @@
+.trashZone {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-trash-idle);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  z-index: var(--z-trash-zone);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.trashZoneActive {
+  background-color: var(--color-trash-active);
+  border-color: var(--color-trash-active);
+  color: var(--color-surface);
+  transform: scale(1.1);
+}
