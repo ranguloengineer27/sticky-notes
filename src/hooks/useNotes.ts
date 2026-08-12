@@ -1,5 +1,11 @@
 import { useState } from 'react'
-import type { Note, NoteColor, Content, ResizeBounds } from '../types/note'
+import type {
+  Note,
+  NoteColor,
+  Content,
+  ResizeBounds,
+  ResizeCorner,
+} from '../types/note'
 import {
   loadNotes,
   createNote,
@@ -10,6 +16,9 @@ import { clampNoteSize } from '../utils/clampNoteSize'
 import { getNextZIndex } from '../utils/getNextZIndex'
 import { useAutoSave } from './useAutoSave'
 
+const LEFT_RESIZE_CORNERS: ResizeCorner[] = ['top-left', 'bottom-left']
+const TOP_RESIZE_CORNERS: ResizeCorner[] = ['top-left', 'top-right']
+
 export interface UseNotesResult {
   notes: Note[]
   editingNoteId: string | null
@@ -17,7 +26,7 @@ export interface UseNotesResult {
   onUpdate: (id: string, content: Content) => void
   onColorChange: (id: string, color: NoteColor) => void
   onDrag: (id: string, x: number, y: number) => void
-  onResize: (id: string, bounds: ResizeBounds) => void
+  onResize: (id: string, corner: ResizeCorner, bounds: ResizeBounds) => void
   onDelete: (id: string) => void
   onBringToFront: (id: string) => void
   onStartEditing: (id: string) => void
@@ -68,14 +77,24 @@ export function useNotes(): UseNotesResult {
     )
   }
 
-  function onResize(id: string, bounds: ResizeBounds): void {
+  function onResize(
+    id: string,
+    corner: ResizeCorner,
+    bounds: ResizeBounds,
+  ): void {
     const note = findNoteById(id)
     if (!note) return
 
     const size = clampNoteSize({ width: bounds.width, height: bounds.height })
+
+    const isLeftCorner = LEFT_RESIZE_CORNERS.includes(corner)
+    const isTopCorner = TOP_RESIZE_CORNERS.includes(corner)
+    const x = isLeftCorner ? bounds.x + bounds.width - size.width : bounds.x
+    const y = isTopCorner ? bounds.y + bounds.height - size.height : bounds.y
+
     setNotes(
       updateNote(notes, id, {
-        position: { x: bounds.x, y: bounds.y, zIndex: note.position.zIndex },
+        position: { x, y, zIndex: note.position.zIndex },
         size,
       }),
     )

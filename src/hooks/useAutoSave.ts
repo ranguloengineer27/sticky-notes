@@ -16,7 +16,6 @@ export function useAutoSave(
     }
 
     const timeoutId = window.setTimeout(() => {
-      // No caller is left to hand a failure to here, so log rather than throw.
       try {
         saveNotes(notes)
       } catch (error) {

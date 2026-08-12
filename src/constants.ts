@@ -8,3 +8,10 @@ export const MIN_NOTE_HEIGHT = 100
 
 export const NOTE_COLORS = ['#DE7373', '#FCE477', '#87E6AC', '#BFBAFF'] as const
 export const DEFAULT_NOTE_COLOR = NOTE_COLORS[0]
+
+export const RESIZE_CORNERS = [
+  'top-left',
+  'top-right',
+  'bottom-left',
+  'bottom-right',
+] as const

@@ -81,6 +81,8 @@ them first.
 - Use PascalCase for component names and their folders (e.g. `components/StickyNote/StickyNote.tsx`). Use camelCase for hooks, utils, and services (e.g. `hooks/useDraggable.ts`).
 - Use literal union types for fixed string values; when the values are also needed at runtime, define them with as const and derive the type from the constant.
 - Prefer defining a named type for complex or reusable types instead of using inline type expressions such as `Partial<Pick<...>>` directly in function parameters.
+- Avoid comments inside de code.
+- For validations avoid harcoded values for numbers or strings, create constants instead
 
 ## Error handling
 

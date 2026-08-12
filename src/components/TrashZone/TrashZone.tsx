@@ -1,16 +1,18 @@
+import type { Ref } from 'react'
 import styles from './TrashZone.module.scss'
 
 export interface TrashZoneProps {
   isActive: boolean
+  ref?: Ref<HTMLDivElement>
 }
 
-export function TrashZone({ isActive }: TrashZoneProps) {
+export function TrashZone({ isActive, ref }: TrashZoneProps) {
   const className = isActive
     ? `${styles.trashZone} ${styles.trashZoneActive}`
     : styles.trashZone
 
   return (
-    <div className={className} aria-label="Trash zone" role="img">
+    <div ref={ref} className={className} aria-label="Trash zone" role="img">
       <svg
         viewBox="0 0 24 24"
         width="24"

@@ -1,6 +1,7 @@
-import { NOTE_COLORS } from '../constants'
+import { NOTE_COLORS, RESIZE_CORNERS } from '../constants'
 
 export type NoteColor = (typeof NOTE_COLORS)[number]
+export type ResizeCorner = (typeof RESIZE_CORNERS)[number]
 
 export interface Position {
   x: number
