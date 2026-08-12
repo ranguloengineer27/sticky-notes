@@ -63,14 +63,9 @@ export function StickyNote({
   }, [isEditing])
 
   useClickOutside(textareaRef, () => {
-    // onStartEditing(null)
-
     if (!isEditing) return
-    console.log('Click outsite !')
     onStopEditing()
   })
-
-  console.log('ARE WE EDITING ???', isEditing)
 
   const dragHandlers = usePointerDrag({
     onMove(deltaX, deltaY, event) {
@@ -190,41 +185,27 @@ export function StickyNote({
       onPointerDown={handlePointerDown}
     >
       {isEditing ? (
-        <>
-          {/* <input
-            ref={titleInputRef}
-            className={styles.title}
-            aria-label="Note title"
-            value={note.content.title}
-            onChange={(event) =>
-              onUpdate(note.id, { ...note.content, title: event.target.value })
-            }
-          /> */}
-          <textarea
-            ref={textareaRef}
-            className={styles.description}
-            aria-label="Note description"
-            value={note.content.description}
-            onChange={(event) =>
-              onUpdate(note.id, {
-                ...note.content,
-                description: event.target.value,
-              })
-            }
-          />
-        </>
+        <textarea
+          ref={textareaRef}
+          className={styles.description}
+          aria-label="Note description"
+          value={note.content.description}
+          onChange={(event) =>
+            onUpdate(note.id, {
+              ...note.content,
+              description: event.target.value,
+            })
+          }
+        />
       ) : (
         <>
           <div
             className={styles.staticContent}
             onDoubleClick={(e) => {
               e.stopPropagation()
-              console.log('LETS START EDITING !!!!')
               onStartEditing(note.id)
             }}
-            //onClick={() => onStartEditing(note.id)}
           >
-            {/* <h3 className={styles.titleText}>{note.content.title}</h3> */}
             <p className={styles.descriptionText}>{note.content.description}</p>
           </div>
           <button

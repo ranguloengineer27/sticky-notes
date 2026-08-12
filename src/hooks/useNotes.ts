@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type {
   Note,
   NoteColor,
@@ -13,8 +13,11 @@ import {
   deleteNote,
 } from '../services/notesService'
 import { clampNoteSize } from '../utils/clampNoteSize'
+import { clampNotePosition } from '../utils/clampNotePosition'
+import type { CanvasBounds } from '../utils/clampNotePosition'
 import { getNextZIndex } from '../utils/getNextZIndex'
 import { useAutoSave } from './useAutoSave'
+import { DEFAULT_NOTE_WIDTH, DEFAULT_NOTE_HEIGHT } from '../constants'
 
 const LEFT_RESIZE_CORNERS: ResizeCorner[] = ['top-left', 'bottom-left']
 const TOP_RESIZE_CORNERS: ResizeCorner[] = ['top-left', 'top-right']
@@ -33,9 +36,19 @@ export interface UseNotesResult {
   onStopEditing: () => void
 }
 
+function getCanvasBounds(): CanvasBounds {
+  return { width: window.innerWidth, height: window.innerHeight }
+}
+
+function clampNoteToCanvas(note: Note, canvasBounds: CanvasBounds): Note {
+  const position = clampNotePosition(note.position, note.size, canvasBounds)
+  return { ...note, position: { ...position, zIndex: note.position.zIndex } }
+}
+
 function loadInitialNotes(): Note[] {
   try {
-    return loadNotes()
+    const canvasBounds = getCanvasBounds()
+    return loadNotes().map((note) => clampNoteToCanvas(note, canvasBounds))
   } catch (error) {
     console.error(error)
     return []
@@ -48,12 +61,42 @@ export function useNotes(): UseNotesResult {
 
   useAutoSave(notes)
 
+  useEffect(() => {
+    function clampNotesToCanvas(): void {
+      const canvasBounds = getCanvasBounds()
+
+      setNotes((currentNotes) => {
+        let hasOffCanvasNotes = false
+        const clampedNotes = currentNotes.map((note) => {
+          const clampedNote = clampNoteToCanvas(note, canvasBounds)
+          if (
+            clampedNote.position.x !== note.position.x ||
+            clampedNote.position.y !== note.position.y
+          ) {
+            hasOffCanvasNotes = true
+          }
+          return clampedNote
+        })
+
+        return hasOffCanvasNotes ? clampedNotes : currentNotes
+      })
+    }
+
+    window.addEventListener('resize', clampNotesToCanvas)
+    return () => window.removeEventListener('resize', clampNotesToCanvas)
+  }, [])
+
   function findNoteById(id: string): Note | undefined {
     return notes.find((note) => note.id === id)
   }
 
   function onCreate(x: number, y: number): void {
-    const result = createNote(notes, x, y)
+    const position = clampNotePosition(
+      { x, y },
+      { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT },
+      getCanvasBounds(),
+    )
+    const result = createNote(notes, position.x, position.y)
     setNotes(result.notes)
     setEditingNoteId(result.note.id)
   }
@@ -70,9 +113,11 @@ export function useNotes(): UseNotesResult {
     const note = findNoteById(id)
     if (!note) return
 
+    const position = clampNotePosition({ x, y }, note.size, getCanvasBounds())
+
     setNotes(
       updateNote(notes, id, {
-        position: { x, y, zIndex: note.position.zIndex },
+        position: { ...position, zIndex: note.position.zIndex },
       }),
     )
   }
@@ -85,16 +130,26 @@ export function useNotes(): UseNotesResult {
     const note = findNoteById(id)
     if (!note) return
 
-    const size = clampNoteSize({ width: bounds.width, height: bounds.height })
+    const canvasBounds = getCanvasBounds()
+    const minClampedSize = clampNoteSize({
+      width: bounds.width,
+      height: bounds.height,
+    })
+    const size = {
+      width: Math.min(minClampedSize.width, canvasBounds.width),
+      height: Math.min(minClampedSize.height, canvasBounds.height),
+    }
 
     const isLeftCorner = LEFT_RESIZE_CORNERS.includes(corner)
     const isTopCorner = TOP_RESIZE_CORNERS.includes(corner)
     const x = isLeftCorner ? bounds.x + bounds.width - size.width : bounds.x
     const y = isTopCorner ? bounds.y + bounds.height - size.height : bounds.y
 
+    const position = clampNotePosition({ x, y }, size, canvasBounds)
+
     setNotes(
       updateNote(notes, id, {
-        position: { x, y, zIndex: note.position.zIndex },
+        position: { ...position, zIndex: note.position.zIndex },
         size,
       }),
     )

@@ -11,6 +11,11 @@ function renderStickyNote(
     note: buildNote(),
     isEditing: false,
     onUpdate: vi.fn(),
+    onDrag: vi.fn(),
+    onResize: vi.fn(),
+    onColorChange: vi.fn(),
+    onDragOverTrash: vi.fn(),
+    onDrop: vi.fn(),
     onStartEditing: vi.fn(),
     onStopEditing: vi.fn(),
     onBringToFront: vi.fn(),
@@ -21,7 +26,7 @@ function renderStickyNote(
 }
 
 describe('StickyNote', () => {
-  it('renders the title and description as static text when not editing', () => {
+  it('renders the description as static text when not editing', () => {
     renderStickyNote({
       note: buildNote({
         content: { title: 'Groceries', description: 'Milk, eggs' },
@@ -29,21 +34,81 @@ describe('StickyNote', () => {
       isEditing: false,
     })
 
-    expect(screen.getByText('Groceries')).toBeInTheDocument()
     expect(screen.getByText('Milk, eggs')).toBeInTheDocument()
-    expect(screen.queryByLabelText('Note title')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Note description')).not.toBeInTheDocument()
   })
 
   it('starts editing when the static content is double-clicked', async () => {
     const user = userEvent.setup()
-    const props = renderStickyNote({ isEditing: false })
+    const props = renderStickyNote({
+      note: buildNote({
+        content: { title: 'Groceries', description: 'Milk, eggs' },
+      }),
+      isEditing: false,
+    })
 
-    await user.dblClick(screen.getByText(props.note.content.title))
+    await user.dblClick(screen.getByText(props.note.content.description))
 
     expect(props.onStartEditing).toHaveBeenCalledWith(props.note.id)
   })
 
-  it('renders editable fields populated with the note content when editing', () => {
+  it('starts editing when the edit button is clicked', () => {
+    const props = renderStickyNote({ isEditing: false })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit note' }))
+
+    expect(props.onStartEditing).toHaveBeenCalledWith(props.note.id)
+  })
+
+  it('does not start a drag when the pointer goes down on the edit button', () => {
+    const props = renderStickyNote({
+      note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
+      isEditing: false,
+    })
+    const editButton = screen.getByRole('button', { name: 'Edit note' })
+
+    fireEvent.pointerDown(editButton, {
+      pointerId: 1,
+      clientX: 100,
+      clientY: 100,
+    })
+    fireEvent.pointerMove(document.body, {
+      pointerId: 1,
+      clientX: 130,
+      clientY: 90,
+    })
+
+    expect(props.onDrag).not.toHaveBeenCalled()
+  })
+
+  it('focuses the description field automatically when it mounts already in edit mode', () => {
+    renderStickyNote({ isEditing: true })
+
+    expect(screen.getByLabelText('Note description')).toHaveFocus()
+  })
+
+  it('focuses the description field automatically when transitioning into edit mode', () => {
+    const props = {
+      note: buildNote(),
+      isEditing: false,
+      onUpdate: vi.fn(),
+      onDrag: vi.fn(),
+      onResize: vi.fn(),
+      onColorChange: vi.fn(),
+      onDragOverTrash: vi.fn(),
+      onDrop: vi.fn(),
+      onStartEditing: vi.fn(),
+      onStopEditing: vi.fn(),
+      onBringToFront: vi.fn(),
+    }
+    const { rerender } = render(<StickyNote {...props} />)
+
+    rerender(<StickyNote {...props} isEditing />)
+
+    expect(screen.getByLabelText('Note description')).toHaveFocus()
+  })
+
+  it('renders the description field populated with the note content when editing', () => {
     const props = renderStickyNote({
       note: buildNote({
         content: { title: 'Groceries', description: 'Milk, eggs' },
@@ -51,30 +116,9 @@ describe('StickyNote', () => {
       isEditing: true,
     })
 
-    expect(screen.getByLabelText('Note title')).toHaveValue(
-      props.note.content.title,
-    )
     expect(screen.getByLabelText('Note description')).toHaveValue(
       props.note.content.description,
     )
-  })
-
-  it('reports the merged content when the title changes', () => {
-    const props = renderStickyNote({
-      note: buildNote({
-        content: { title: 'Groceries', description: 'Milk, eggs' },
-      }),
-      isEditing: true,
-    })
-
-    fireEvent.change(screen.getByLabelText('Note title'), {
-      target: { value: 'Errands' },
-    })
-
-    expect(props.onUpdate).toHaveBeenCalledWith(props.note.id, {
-      title: 'Errands',
-      description: 'Milk, eggs',
-    })
   })
 
   it('reports the merged content when the description changes', () => {
@@ -96,29 +140,286 @@ describe('StickyNote', () => {
   })
 
   it('brings the note to front on pointer down', () => {
-    const props = renderStickyNote()
+    const props = renderStickyNote({
+      note: buildNote({
+        content: { title: 'Groceries', description: 'Milk, eggs' },
+      }),
+    })
 
-    fireEvent.pointerDown(screen.getByText(props.note.content.title))
+    fireEvent.pointerDown(screen.getByText(props.note.content.description))
 
     expect(props.onBringToFront).toHaveBeenCalledWith(props.note.id)
   })
 
-  it('stops editing when focus moves outside the note', () => {
+  it('reports the new position while dragging from the note surface', () => {
+    const props = renderStickyNote({
+      note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
+    })
+    const noteElement = screen.getByTestId('sticky-note')
+
+    fireEvent.pointerDown(noteElement, {
+      pointerId: 1,
+      clientX: 100,
+      clientY: 100,
+    })
+    fireEvent.pointerMove(noteElement, {
+      pointerId: 1,
+      clientX: 130,
+      clientY: 90,
+    })
+
+    expect(props.onDrag).toHaveBeenCalledWith(props.note.id, 70, 50)
+  })
+
+  it('reports the pointer position over the trash zone while dragging', () => {
+    const props = renderStickyNote({
+      note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
+    })
+    const noteElement = screen.getByTestId('sticky-note')
+
+    fireEvent.pointerDown(noteElement, {
+      pointerId: 1,
+      clientX: 100,
+      clientY: 100,
+    })
+    fireEvent.pointerMove(document.body, {
+      pointerId: 1,
+      clientX: 900,
+      clientY: 600,
+    })
+
+    expect(props.onDragOverTrash).toHaveBeenCalledWith(900, 600)
+  })
+
+  it('reports the drop position when the drag ends', () => {
+    const props = renderStickyNote({
+      note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
+    })
+    const noteElement = screen.getByTestId('sticky-note')
+
+    fireEvent.pointerDown(noteElement, {
+      pointerId: 1,
+      clientX: 100,
+      clientY: 100,
+    })
+    fireEvent.pointerUp(document.body, {
+      pointerId: 1,
+      clientX: 900,
+      clientY: 600,
+    })
+
+    expect(props.onDrop).toHaveBeenCalledWith(props.note.id, 900, 600)
+  })
+
+  it('does not report trash position while resizing', () => {
+    const props = renderStickyNote({
+      note: buildNote({
+        position: { x: 40, y: 60, zIndex: 1 },
+        size: { width: 200, height: 150 },
+      }),
+    })
+    const handle = screen.getByTestId('resize-handle-bottom-right')
+
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(document.body, {
+      pointerId: 1,
+      clientX: 900,
+      clientY: 600,
+    })
+    fireEvent.pointerUp(document.body, {
+      pointerId: 1,
+      clientX: 900,
+      clientY: 600,
+    })
+
+    expect(props.onDragOverTrash).not.toHaveBeenCalled()
+    expect(props.onDrop).not.toHaveBeenCalled()
+  })
+
+  it('reports the selected color when a swatch is clicked', () => {
+    const props = renderStickyNote({
+      note: buildNote({ color: '#DE7373' }),
+      isEditing: false,
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Set note color to #87E6AC' }),
+    )
+
+    expect(props.onColorChange).toHaveBeenCalledWith(props.note.id, '#87E6AC')
+  })
+
+  it('marks the note current color swatch as selected', () => {
+    renderStickyNote({
+      note: buildNote({ color: '#87E6AC' }),
+      isEditing: false,
+    })
+
+    expect(
+      screen.getByRole('button', { name: 'Set note color to #87E6AC' }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    expect(
+      screen.getByRole('button', { name: 'Set note color to #DE7373' }),
+    ).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('does not start a drag when the pointer goes down on a color swatch', () => {
+    const props = renderStickyNote({
+      note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
+      isEditing: false,
+    })
+    const swatch = screen.getByRole('button', {
+      name: 'Set note color to #FCE477',
+    })
+
+    fireEvent.pointerDown(swatch, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(document.body, {
+      pointerId: 1,
+      clientX: 130,
+      clientY: 90,
+    })
+
+    expect(props.onDrag).not.toHaveBeenCalled()
+  })
+
+  it('does not start a drag when the pointer goes down on an editable field', () => {
+    const props = renderStickyNote({
+      note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
+      isEditing: true,
+    })
+    const description = screen.getByLabelText('Note description')
+
+    fireEvent.pointerDown(description, {
+      pointerId: 1,
+      clientX: 100,
+      clientY: 100,
+    })
+    fireEvent.pointerMove(screen.getByTestId('sticky-note'), {
+      pointerId: 1,
+      clientX: 130,
+      clientY: 90,
+    })
+
+    expect(props.onDrag).not.toHaveBeenCalled()
+  })
+
+  it('reports the new bounds while resizing from the bottom-right handle', () => {
+    const props = renderStickyNote({
+      note: buildNote({
+        position: { x: 40, y: 60, zIndex: 1 },
+        size: { width: 200, height: 150 },
+      }),
+    })
+    const handle = screen.getByTestId('resize-handle-bottom-right')
+
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 130, clientY: 90 })
+
+    expect(props.onResize).toHaveBeenCalledWith(props.note.id, 'bottom-right', {
+      x: 40,
+      y: 60,
+      width: 230,
+      height: 140,
+    })
+  })
+
+  it('reports the new bounds while resizing from the top-left handle', () => {
+    const props = renderStickyNote({
+      note: buildNote({
+        position: { x: 40, y: 60, zIndex: 1 },
+        size: { width: 200, height: 150 },
+      }),
+    })
+    const handle = screen.getByTestId('resize-handle-top-left')
+
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 130, clientY: 90 })
+
+    expect(props.onResize).toHaveBeenCalledWith(props.note.id, 'top-left', {
+      x: 70,
+      y: 50,
+      width: 170,
+      height: 160,
+    })
+  })
+
+  it('reports the new bounds while resizing from the top-right handle', () => {
+    const props = renderStickyNote({
+      note: buildNote({
+        position: { x: 40, y: 60, zIndex: 1 },
+        size: { width: 200, height: 150 },
+      }),
+    })
+    const handle = screen.getByTestId('resize-handle-top-right')
+
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 130, clientY: 90 })
+
+    expect(props.onResize).toHaveBeenCalledWith(props.note.id, 'top-right', {
+      x: 40,
+      y: 50,
+      width: 230,
+      height: 160,
+    })
+  })
+
+  it('reports the new bounds while resizing from the bottom-left handle', () => {
+    const props = renderStickyNote({
+      note: buildNote({
+        position: { x: 40, y: 60, zIndex: 1 },
+        size: { width: 200, height: 150 },
+      }),
+    })
+    const handle = screen.getByTestId('resize-handle-bottom-left')
+
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 130, clientY: 90 })
+
+    expect(props.onResize).toHaveBeenCalledWith(props.note.id, 'bottom-left', {
+      x: 70,
+      y: 60,
+      width: 170,
+      height: 140,
+    })
+  })
+
+  it('brings the note to front and does not also start a note drag when resizing', () => {
+    const props = renderStickyNote({
+      note: buildNote({
+        position: { x: 40, y: 60, zIndex: 1 },
+        size: { width: 200, height: 150 },
+      }),
+    })
+    const handle = screen.getByTestId('resize-handle-bottom-right')
+
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(handle, { pointerId: 1, clientX: 130, clientY: 90 })
+
+    expect(props.onBringToFront).toHaveBeenCalledTimes(1)
+    expect(props.onBringToFront).toHaveBeenCalledWith(props.note.id)
+    expect(props.onDrag).not.toHaveBeenCalled()
+  })
+
+  it('stops editing when a pointer goes down outside the note', () => {
     const props = renderStickyNote({ isEditing: true })
 
-    fireEvent.blur(screen.getByLabelText('Note title'), {
-      relatedTarget: document.body,
-    })
+    fireEvent.pointerDown(document.body)
 
     expect(props.onStopEditing).toHaveBeenCalled()
   })
 
-  it('does not stop editing when focus moves to another field within the note', () => {
+  it('does not stop editing when a pointer goes down inside the note', () => {
     const props = renderStickyNote({ isEditing: true })
 
-    fireEvent.blur(screen.getByLabelText('Note title'), {
-      relatedTarget: screen.getByLabelText('Note description'),
-    })
+    fireEvent.pointerDown(screen.getByLabelText('Note description'))
+
+    expect(props.onStopEditing).not.toHaveBeenCalled()
+  })
+
+  it('does not report a stop-editing click while not in edit mode', () => {
+    const props = renderStickyNote({ isEditing: false })
+
+    fireEvent.pointerDown(document.body)
 
     expect(props.onStopEditing).not.toHaveBeenCalled()
   })

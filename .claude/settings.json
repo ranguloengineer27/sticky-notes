@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(disown)",
+      "Bash(lsof -iTCP -sTCP:LISTEN -P)",
+      "mcp__chrome-devtools__take_screenshot",
+      "Bash(node -e ' *)",
+      "Bash(kill 85500)",
+      "Bash(lsof -iTCP:5199 -sTCP:LISTEN -P)"
+    ]
+  }
+}

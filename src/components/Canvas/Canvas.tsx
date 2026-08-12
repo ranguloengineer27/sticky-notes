@@ -23,8 +23,6 @@ export function Canvas() {
     onBringToFront,
   } = useNotes()
 
-  console.log('editingNoteId ::::', editingNoteId)
-
   function handleDoubleClick(event: React.MouseEvent<HTMLDivElement>) {
     if (event.target !== event.currentTarget) return
 
