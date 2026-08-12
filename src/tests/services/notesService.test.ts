@@ -5,25 +5,14 @@ import {
   createNote,
   updateNote,
   deleteNote,
-} from '../../src/services/notesService'
+} from '../../services/notesService'
 import {
   STORAGE_KEY,
   DEFAULT_NOTE_WIDTH,
   DEFAULT_NOTE_HEIGHT,
   DEFAULT_NOTE_COLOR,
-} from '../../src/constants'
-import type { Note } from '../../src/types/note'
-
-function buildNote(overrides: Partial<Note> = {}): Note {
-  return {
-    id: 'note-1',
-    position: { x: 10, y: 20, zIndex: 1 },
-    size: { width: 200, height: 180 },
-    color: DEFAULT_NOTE_COLOR,
-    content: { title: 'Title', description: 'Description' },
-    ...overrides,
-  }
-}
+} from '../../constants'
+import { buildNote } from '../testUtils'
 
 beforeEach(() => {
   localStorage.clear()

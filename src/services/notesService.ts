@@ -5,6 +5,7 @@ import {
   DEFAULT_NOTE_HEIGHT,
   DEFAULT_NOTE_COLOR,
 } from '../constants'
+import { getNextZIndex } from '../utils/getNextZIndex'
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -36,8 +37,7 @@ export function createNote(
   x: number,
   y: number,
 ): CreateNoteResult {
-  const zIndex =
-    notes.reduce((max, note) => Math.max(max, note.position.zIndex), 0) + 1
+  const zIndex = getNextZIndex(notes)
   const note: Note = {
     id: crypto.randomUUID(),
     position: { x, y, zIndex },

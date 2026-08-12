@@ -8,13 +8,14 @@ export default defineConfig({
   plugins: [react(), babel({ presets: [reactCompilerPreset()] })],
   test: {
     environment: 'jsdom',
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./src/tests/setup.ts'],
     passWithNoTests: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       exclude: [
         'src/main.tsx',
+        'src/tests/**',
         'vite.config.ts',
         'eslint.config.js',
         '**/*.d.ts',
