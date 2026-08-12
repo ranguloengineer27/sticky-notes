@@ -6,15 +6,13 @@ import type {
   ResizeBounds,
   ResizeCorner,
 } from '../types/note'
-import {
-  loadNotes,
-  createNote,
-  updateNote,
-  deleteNote,
-} from '../services/notesService'
+import { createNote, updateNote, deleteNote } from '../services/notesService'
 import { clampNoteSize } from '../utils/clampNoteSize'
 import { clampNotePosition } from '../utils/clampNotePosition'
-import type { CanvasBounds } from '../utils/clampNotePosition'
+import { clampNotesToCanvas } from '../utils/clampNotesToCanvas'
+import { findNoteById } from '../utils/findNoteById'
+import { getCanvasBounds } from '../utils/getCanvasBounds'
+import { loadInitialNotes } from '../utils/loadInitialNotes'
 import { getNextZIndex } from '../utils/getNextZIndex'
 import { useAutoSave } from './useAutoSave'
 import { DEFAULT_NOTE_WIDTH, DEFAULT_NOTE_HEIGHT } from '../constants'
@@ -36,25 +34,6 @@ export interface UseNotesResult {
   onStopEditing: () => void
 }
 
-function getCanvasBounds(): CanvasBounds {
-  return { width: window.innerWidth, height: window.innerHeight }
-}
-
-function clampNoteToCanvas(note: Note, canvasBounds: CanvasBounds): Note {
-  const position = clampNotePosition(note.position, note.size, canvasBounds)
-  return { ...note, position: { ...position, zIndex: note.position.zIndex } }
-}
-
-function loadInitialNotes(): Note[] {
-  try {
-    const canvasBounds = getCanvasBounds()
-    return loadNotes().map((note) => clampNoteToCanvas(note, canvasBounds))
-  } catch (error) {
-    console.error(error)
-    return []
-  }
-}
-
 export function useNotes(): UseNotesResult {
   const [notes, setNotes] = useState<Note[]>(loadInitialNotes)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
@@ -62,33 +41,14 @@ export function useNotes(): UseNotesResult {
   useAutoSave(notes)
 
   useEffect(() => {
-    function clampNotesToCanvas(): void {
+    function handleWindowResize(): void {
       const canvasBounds = getCanvasBounds()
-
-      setNotes((currentNotes) => {
-        let hasOffCanvasNotes = false
-        const clampedNotes = currentNotes.map((note) => {
-          const clampedNote = clampNoteToCanvas(note, canvasBounds)
-          if (
-            clampedNote.position.x !== note.position.x ||
-            clampedNote.position.y !== note.position.y
-          ) {
-            hasOffCanvasNotes = true
-          }
-          return clampedNote
-        })
-
-        return hasOffCanvasNotes ? clampedNotes : currentNotes
-      })
+      setNotes((currentNotes) => clampNotesToCanvas(currentNotes, canvasBounds))
     }
 
-    window.addEventListener('resize', clampNotesToCanvas)
-    return () => window.removeEventListener('resize', clampNotesToCanvas)
+    window.addEventListener('resize', handleWindowResize)
+    return () => window.removeEventListener('resize', handleWindowResize)
   }, [])
-
-  function findNoteById(id: string): Note | undefined {
-    return notes.find((note) => note.id === id)
-  }
 
   function onCreate(x: number, y: number): void {
     const position = clampNotePosition(
@@ -110,7 +70,7 @@ export function useNotes(): UseNotesResult {
   }
 
   function onDrag(id: string, x: number, y: number): void {
-    const note = findNoteById(id)
+    const note = findNoteById(notes, id)
     if (!note) return
 
     const position = clampNotePosition({ x, y }, note.size, getCanvasBounds())
@@ -127,7 +87,7 @@ export function useNotes(): UseNotesResult {
     corner: ResizeCorner,
     bounds: ResizeBounds,
   ): void {
-    const note = findNoteById(id)
+    const note = findNoteById(notes, id)
     if (!note) return
 
     const canvasBounds = getCanvasBounds()
@@ -163,7 +123,7 @@ export function useNotes(): UseNotesResult {
   }
 
   function onBringToFront(id: string): void {
-    const note = findNoteById(id)
+    const note = findNoteById(notes, id)
     if (!note) return
 
     const zIndex = getNextZIndex(notes)

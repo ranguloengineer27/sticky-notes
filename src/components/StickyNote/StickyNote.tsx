@@ -7,8 +7,9 @@ import type {
   ResizeBounds,
   ResizeCorner,
 } from '../../types/note'
-import { NOTE_COLORS } from '../../constants'
+import { NOTE_COLORS, RESIZE_CORNERS } from '../../constants'
 import { usePointerDrag } from '../../hooks/usePointerDrag'
+import type { PointerDragHandlers } from '../../hooks/usePointerDrag'
 import { computeResizedBounds } from '../../utils/computeResizedBounds'
 import styles from './StickyNote.module.scss'
 import { useClickOutside } from '../../hooks/useClickOutside'
@@ -57,8 +58,8 @@ export function StickyNote({
     const textarea = textareaRef.current
     if (isEditing && textarea) {
       textarea.focus()
-      const end = textarea.value.length
-      textarea.setSelectionRange(end, end)
+      const caretPosition = textarea.value.length
+      textarea.setSelectionRange(caretPosition, caretPosition)
     }
   }, [isEditing])
 
@@ -118,6 +119,20 @@ export function StickyNote({
     onEnd: handleResizeEnd,
   })
 
+  const resizeDragByCorner: Record<ResizeCorner, PointerDragHandlers> = {
+    'top-left': topLeftDrag,
+    'top-right': topRightDrag,
+    'bottom-left': bottomLeftDrag,
+    'bottom-right': bottomRightDrag,
+  }
+
+  const resizeHandleClassByCorner: Record<ResizeCorner, string> = {
+    'top-left': styles.resizeHandleTopLeft,
+    'top-right': styles.resizeHandleTopRight,
+    'bottom-left': styles.resizeHandleBottomLeft,
+    'bottom-right': styles.resizeHandleBottomRight,
+  }
+
   function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
     onBringToFront(note.id)
 
@@ -136,38 +151,14 @@ export function StickyNote({
     }
   }
 
-  function handleTopLeftPointerDown(event: PointerEvent<HTMLDivElement>): void {
-    event.stopPropagation()
-    onBringToFront(note.id)
-    resizeOrigin.current = captureResizeOrigin()
-    topLeftDrag.onPointerDown(event)
-  }
-
-  function handleTopRightPointerDown(
+  function handleResizePointerDown(
+    corner: ResizeCorner,
     event: PointerEvent<HTMLDivElement>,
   ): void {
     event.stopPropagation()
     onBringToFront(note.id)
     resizeOrigin.current = captureResizeOrigin()
-    topRightDrag.onPointerDown(event)
-  }
-
-  function handleBottomLeftPointerDown(
-    event: PointerEvent<HTMLDivElement>,
-  ): void {
-    event.stopPropagation()
-    onBringToFront(note.id)
-    resizeOrigin.current = captureResizeOrigin()
-    bottomLeftDrag.onPointerDown(event)
-  }
-
-  function handleBottomRightPointerDown(
-    event: PointerEvent<HTMLDivElement>,
-  ): void {
-    event.stopPropagation()
-    onBringToFront(note.id)
-    resizeOrigin.current = captureResizeOrigin()
-    bottomRightDrag.onPointerDown(event)
+    resizeDragByCorner[corner].onPointerDown(event)
   }
 
   return (
@@ -246,30 +237,15 @@ export function StickyNote({
         </>
       )}
 
-      <div
-        aria-hidden="true"
-        data-testid="resize-handle-top-left"
-        className={`${styles.resizeHandle} ${styles.resizeHandleTopLeft}`}
-        onPointerDown={handleTopLeftPointerDown}
-      />
-      <div
-        aria-hidden="true"
-        data-testid="resize-handle-top-right"
-        className={`${styles.resizeHandle} ${styles.resizeHandleTopRight}`}
-        onPointerDown={handleTopRightPointerDown}
-      />
-      <div
-        aria-hidden="true"
-        data-testid="resize-handle-bottom-left"
-        className={`${styles.resizeHandle} ${styles.resizeHandleBottomLeft}`}
-        onPointerDown={handleBottomLeftPointerDown}
-      />
-      <div
-        aria-hidden="true"
-        data-testid="resize-handle-bottom-right"
-        className={`${styles.resizeHandle} ${styles.resizeHandleBottomRight}`}
-        onPointerDown={handleBottomRightPointerDown}
-      />
+      {RESIZE_CORNERS.map((corner) => (
+        <div
+          key={corner}
+          aria-hidden="true"
+          data-testid={`resize-handle-${corner}`}
+          className={`${styles.resizeHandle} ${resizeHandleClassByCorner[corner]}`}
+          onPointerDown={(event) => handleResizePointerDown(corner, event)}
+        />
+      ))}
     </div>
   )
 }
