@@ -22,7 +22,7 @@ export interface StickyNoteProps {
   onResize: (id: string, corner: ResizeCorner, bounds: ResizeBounds) => void
   onColorChange: (id: string, color: NoteColor) => void
   onDragOverTrash: (id: string, x: number, y: number) => void
-  onDrop: (id: string) => void
+  onDrop: (id: string, x: number, y: number) => void
   onStartEditing: (id: string) => void
   onStopEditing: () => void
   onBringToFront: (id: string) => void
@@ -51,6 +51,7 @@ export function StickyNote({
   onBringToFront,
 }: StickyNoteProps) {
   const dragOrigin = useRef<{ x: number; y: number } | null>(null)
+  const dragPosition = useRef<{ x: number; y: number } | null>(null)
   const resizeOrigin = useRef<ResizeBounds | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -75,13 +76,20 @@ export function StickyNote({
 
       const x = origin.x + deltaX
       const y = origin.y + deltaY
+      dragPosition.current = { x, y }
 
       onDrag(note.id, x, y)
       onDragOverTrash(note.id, x, y)
     },
     onEnd() {
       dragOrigin.current = null
-      onDrop(note.id)
+      const position = dragPosition.current ?? {
+        x: note.position.x,
+        y: note.position.y,
+      }
+      dragPosition.current = null
+
+      onDrop(note.id, position.x, position.y)
     },
   })
 

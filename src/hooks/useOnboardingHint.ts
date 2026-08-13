@@ -30,13 +30,17 @@ export function useOnboardingHint(
     true,
     ONBOARDING_HINT_MIN_VISIBLE_MS,
   )
-  const isCreateNoteHintOpen =
-    !hasNotes || (wasInitiallyEmpty && !hasCreateNoteMinDurationElapsed)
 
   const [hasEnteredEditModeOnce, setHasEnteredEditModeOnce] = useState(false)
+
   if (isEditingNote && !hasEnteredEditModeOnce) {
     setHasEnteredEditModeOnce(true)
   }
+
+  const isCreateNoteHintOpen =
+    !hasEnteredEditModeOnce &&
+    (!hasNotes || (wasInitiallyEmpty && !hasCreateNoteMinDurationElapsed))
+
   const hasExitEditingDurationElapsed = useDelayedFlag(
     hasEnteredEditModeOnce,
     EXIT_EDITING_HINT_VISIBLE_MS,
@@ -44,6 +48,7 @@ export function useOnboardingHint(
 
   const [isExitEditingHintDismissed, setIsExitEditingHintDismissed] =
     useState(false)
+
   if (hasExitEditingDurationElapsed && !isExitEditingHintDismissed) {
     setIsExitEditingHintDismissed(true)
   }
@@ -57,6 +62,7 @@ export function useOnboardingHint(
   )
 
   const [message, setMessage] = useState(activeMessage ?? '')
+
   if (activeMessage !== null && activeMessage !== message) {
     setMessage(activeMessage)
   }

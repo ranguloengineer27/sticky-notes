@@ -58,25 +58,25 @@ export function Canvas() {
     return rect !== null && trashRect ? doRectsOverlap(rect, trashRect) : false
   }
 
+  function isNoteTouchingTrashZone(x: number, y: number, size: Size): boolean {
+    const position = clampNotePosition({ x, y }, size, getCanvasBounds())
+    return isTouchingTrashZone(getNoteViewportRect(position, size))
+  }
+
   function handleDragOverTrash(id: string, x: number, y: number): void {
     const note = findNoteById(notes, id)
     if (!note) return
 
-    const position = clampNotePosition({ x, y }, note.size, getCanvasBounds())
-    const noteRect = getNoteViewportRect(position, note.size)
-    const isTouchingTrash = isTouchingTrashZone(noteRect)
-    setIsTrashActive(isTouchingTrash)
+    setIsTrashActive(isNoteTouchingTrashZone(x, y, note.size))
   }
 
-  function handleDrop(id: string): void {
+  function handleDrop(id: string, x: number, y: number): void {
     setIsTrashActive(false)
 
     const note = findNoteById(notes, id)
     if (!note) return
 
-    const noteRect = getNoteViewportRect(note.position, note.size)
-    const isTouchingTrash = isTouchingTrashZone(noteRect)
-    if (isTouchingTrash) {
+    if (isNoteTouchingTrashZone(x, y, note.size)) {
       onDelete(id)
     }
   }

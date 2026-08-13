@@ -105,6 +105,35 @@ describe('Canvas', () => {
     expect(screen.queryByTestId('sticky-note')).not.toBeInTheDocument()
   })
 
+  it('deletes the note even when the drop happens before the last drag position has rendered', () => {
+    vi.spyOn(notesService, 'loadNotes').mockReturnValue([
+      buildNote({ id: 'a', position: { x: 0, y: 0, zIndex: 1 } }),
+    ])
+    render(<Canvas />)
+    mockTrashZoneRect()
+    const noteElement = screen.getByTestId('sticky-note')
+
+    act(() => {
+      fireEvent.pointerDown(noteElement, {
+        pointerId: 1,
+        clientX: 10,
+        clientY: 10,
+      })
+      fireEvent.pointerMove(document.body, {
+        pointerId: 1,
+        clientX: 930,
+        clientY: 630,
+      })
+      fireEvent.pointerUp(document.body, {
+        pointerId: 1,
+        clientX: 930,
+        clientY: 630,
+      })
+    })
+
+    expect(screen.queryByTestId('sticky-note')).not.toBeInTheDocument()
+  })
+
   it('deactivates the trash zone when the drag ends away from it', () => {
     vi.spyOn(notesService, 'loadNotes').mockReturnValue([
       buildNote({ id: 'a', position: { x: 0, y: 0, zIndex: 1 } }),

@@ -124,4 +124,27 @@ describe('useOnboardingHint', () => {
     rerender({ isEditingNote: true })
     expect(result.current.isOpen).toBe(false)
   })
+
+  it('does not let the create-note hint reactivate after the exit-editing hint has been dismissed, even if editing started right after mount', () => {
+    const { result, rerender } = renderHook(
+      ({ hasNotes, isEditingNote }) =>
+        useOnboardingHint(hasNotes, isEditingNote),
+      { initialProps: { hasNotes: false, isEditingNote: false } },
+    )
+
+    act(() => {
+      vi.advanceTimersByTime(5)
+    })
+    rerender({ hasNotes: true, isEditingNote: true })
+
+    act(() => {
+      vi.advanceTimersByTime(EXIT_EDITING_HINT_VISIBLE_MS)
+    })
+    expect(result.current.isOpen).toBe(false)
+
+    act(() => {
+      vi.advanceTimersByTime(ONBOARDING_HINT_MIN_VISIBLE_MS)
+    })
+    expect(result.current.isOpen).toBe(false)
+  })
 })

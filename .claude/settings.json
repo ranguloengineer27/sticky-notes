@@ -20,7 +20,8 @@
       "Bash(git -C /Users/roberto/projects/sticky-notes show c653aee -- .claude/settings.json src/hooks/useEmptyCanvasHint.ts)",
       "Bash(node -e \"require.resolve\\('puppeteer-core'\\)\")",
       "Bash(node -e \"require.resolve\\('puppeteer'\\)\")",
-      "Bash(\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --disable-gpu --screenshot=\"/private/tmp/claude-501/-Users-roberto-projects-sticky-notes/9be95508-b3db-4a9d-8c53-a0c98115f55e/scratchpad/trash-color-check.png\" --window-size=400,220 --user-data-dir=\"/private/tmp/claude-501/-Users-roberto-projects-sticky-notes/9be95508-b3db-4a9d-8c53-a0c98115f55e/scratchpad/chrome-shot-profile2\" \"file:///private/tmp/claude-501/-Users-roberto-projects-sticky-notes/9be95508-b3db-4a9d-8c53-a0c98115f55e/scratchpad/trash-color-check.html\")"
+      "Bash(\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --disable-gpu --screenshot=\"/private/tmp/claude-501/-Users-roberto-projects-sticky-notes/9be95508-b3db-4a9d-8c53-a0c98115f55e/scratchpad/trash-color-check.png\" --window-size=400,220 --user-data-dir=\"/private/tmp/claude-501/-Users-roberto-projects-sticky-notes/9be95508-b3db-4a9d-8c53-a0c98115f55e/scratchpad/chrome-shot-profile2\" \"file:///private/tmp/claude-501/-Users-roberto-projects-sticky-notes/9be95508-b3db-4a9d-8c53-a0c98115f55e/scratchpad/trash-color-check.html\")",
+      "Bash(git stash *)"
     ]
   }
 }
