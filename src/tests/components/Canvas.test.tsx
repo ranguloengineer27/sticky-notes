@@ -1,8 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { Canvas } from '../../components/Canvas/Canvas'
 import * as notesService from '../../services/notesService'
 import { buildNote } from '../testUtils'
+import {
+  EMPTY_CANVAS_HINT_MIN_VISIBLE_MS,
+  POPOVER_EXIT_TRANSITION_MS,
+} from '../../constants'
 
 describe('Canvas', () => {
   beforeEach(() => {
@@ -163,5 +167,62 @@ describe('Canvas', () => {
     expect(screen.getByTestId('sticky-note')).toHaveStyle({
       backgroundColor: '#BFBAFF',
     })
+  })
+
+  it('shows a hint to create a note when the canvas is empty', () => {
+    render(<Canvas />)
+
+    expect(
+      screen.getByText(
+        'Double-click anywhere on the canvas to create a new note',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('does not show the hint when notes already exist', () => {
+    vi.spyOn(notesService, 'loadNotes').mockReturnValue([buildNote()])
+    render(<Canvas />)
+
+    expect(
+      screen.queryByText(
+        'Double-click anywhere on the canvas to create a new note',
+      ),
+    ).not.toBeInTheDocument()
+  })
+
+  it('keeps the hint visible for at least the minimum duration after creating the first note', () => {
+    const { container } = render(<Canvas />)
+    const canvas = container.firstChild as HTMLElement
+    vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
+      toJSON() {},
+    } as DOMRect)
+
+    fireEvent.doubleClick(canvas, { clientX: 50, clientY: 50 })
+
+    const hint = screen.getByText(
+      'Double-click anywhere on the canvas to create a new note',
+    )
+    expect(hint).toBeInTheDocument()
+
+    act(() => {
+      vi.advanceTimersByTime(EMPTY_CANVAS_HINT_MIN_VISIBLE_MS)
+    })
+    act(() => {
+      vi.advanceTimersByTime(POPOVER_EXIT_TRANSITION_MS)
+    })
+
+    expect(
+      screen.queryByText(
+        'Double-click anywhere on the canvas to create a new note',
+      ),
+    ).not.toBeInTheDocument()
   })
 })

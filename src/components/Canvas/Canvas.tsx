@@ -1,8 +1,11 @@
 import { useRef, useState } from 'react'
 import { useNotes } from '../../hooks/useNotes'
+import { useEmptyCanvasHint } from '../../hooks/useEmptyCanvasHint'
 import { StickyNote } from '../StickyNote/StickyNote'
 import { TrashZone } from '../TrashZone/TrashZone'
+import { Popover } from '../Popover/Popover'
 import { isPointInRect } from '../../utils/isPointInRect'
+import { EMPTY_CANVAS_HINT_MESSAGE } from '../../constants'
 import styles from './Canvas.module.scss'
 
 export function Canvas() {
@@ -22,6 +25,7 @@ export function Canvas() {
     onStopEditing,
     onBringToFront,
   } = useNotes()
+  const isHintVisible = useEmptyCanvasHint(notes.length > 0)
 
   function handleDoubleClick(event: React.MouseEvent<HTMLDivElement>) {
     if (event.target !== event.currentTarget) return
@@ -72,6 +76,7 @@ export function Canvas() {
         />
       ))}
       <TrashZone ref={trashZoneRef} isActive={isTrashActive} />
+      <Popover message={EMPTY_CANVAS_HINT_MESSAGE} isOpen={isHintVisible} />
     </div>
   )
 }

@@ -7,7 +7,8 @@
       "mcp__chrome-devtools__take_screenshot",
       "Bash(node -e ' *)",
       "Bash(kill 85500)",
-      "Bash(lsof -iTCP:5199 -sTCP:LISTEN -P)"
+      "Bash(lsof -iTCP:5199 -sTCP:LISTEN -P)",
+      "Bash(awk 'NR>1{print $2}')"
     ]
   }
 }
