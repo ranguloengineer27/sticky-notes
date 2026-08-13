@@ -1,10 +1,16 @@
 import { useRef, useState } from 'react'
+import type { Size } from '../../types/note'
 import { useNotes } from '../../hooks/useNotes'
 import { useEmptyCanvasHint } from '../../hooks/useEmptyCanvasHint'
 import { StickyNote } from '../StickyNote/StickyNote'
 import { TrashZone } from '../TrashZone/TrashZone'
 import { Popover } from '../Popover/Popover'
-import { isPointInRect } from '../../utils/isPointInRect'
+import type { Rect } from '../../utils/isPointInRect'
+import type { Point } from '../../utils/clampNotePosition'
+import { doRectsOverlap } from '../../utils/doRectsOverlap'
+import { findNoteById } from '../../utils/findNoteById'
+import { clampNotePosition } from '../../utils/clampNotePosition'
+import { getCanvasBounds } from '../../utils/getCanvasBounds'
 import { EMPTY_CANVAS_HINT_MESSAGE } from '../../constants'
 import styles from './Canvas.module.scss'
 
@@ -36,19 +42,39 @@ export function Canvas() {
     onCreate(event.clientX - rect.left, event.clientY - rect.top)
   }
 
-  function isOverTrashZone(clientX: number, clientY: number): boolean {
-    const rect = trashZoneRef.current?.getBoundingClientRect()
-    return rect ? isPointInRect(clientX, clientY, rect) : false
+  function getNoteViewportRect(position: Point, size: Size): Rect | null {
+    const canvasRect = canvasRef.current?.getBoundingClientRect()
+    if (!canvasRect) return null
+
+    const left = canvasRect.left + position.x
+    const top = canvasRect.top + position.y
+    return { left, top, right: left + size.width, bottom: top + size.height }
   }
 
-  function handleDragOverTrash(clientX: number, clientY: number): void {
-    setIsTrashActive(isOverTrashZone(clientX, clientY))
+  function isTouchingTrashZone(rect: Rect | null): boolean {
+    const trashRect = trashZoneRef.current?.getBoundingClientRect()
+    return rect !== null && trashRect ? doRectsOverlap(rect, trashRect) : false
   }
 
-  function handleDrop(id: string, clientX: number, clientY: number): void {
+  function handleDragOverTrash(id: string, x: number, y: number): void {
+    const note = findNoteById(notes, id)
+    if (!note) return
+
+    const position = clampNotePosition({ x, y }, note.size, getCanvasBounds())
+    const noteRect = getNoteViewportRect(position, note.size)
+    const isTouchingTrash = isTouchingTrashZone(noteRect)
+    setIsTrashActive(isTouchingTrash)
+  }
+
+  function handleDrop(id: string): void {
     setIsTrashActive(false)
 
-    if (isOverTrashZone(clientX, clientY)) {
+    const note = findNoteById(notes, id)
+    if (!note) return
+
+    const noteRect = getNoteViewportRect(note.position, note.size)
+    const isTouchingTrash = isTouchingTrashZone(noteRect)
+    if (isTouchingTrash) {
       onDelete(id)
     }
   }

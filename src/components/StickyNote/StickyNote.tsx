@@ -21,8 +21,8 @@ export interface StickyNoteProps {
   onDrag: (id: string, x: number, y: number) => void
   onResize: (id: string, corner: ResizeCorner, bounds: ResizeBounds) => void
   onColorChange: (id: string, color: NoteColor) => void
-  onDragOverTrash: (clientX: number, clientY: number) => void
-  onDrop: (id: string, clientX: number, clientY: number) => void
+  onDragOverTrash: (id: string, x: number, y: number) => void
+  onDrop: (id: string) => void
   onStartEditing: (id: string) => void
   onStopEditing: () => void
   onBringToFront: (id: string) => void
@@ -69,16 +69,19 @@ export function StickyNote({
   })
 
   const dragHandlers = usePointerDrag({
-    onMove(deltaX, deltaY, event) {
+    onMove(deltaX, deltaY) {
       const origin = dragOrigin.current
       if (!origin) return
 
-      onDrag(note.id, origin.x + deltaX, origin.y + deltaY)
-      onDragOverTrash(event.clientX, event.clientY)
+      const x = origin.x + deltaX
+      const y = origin.y + deltaY
+
+      onDrag(note.id, x, y)
+      onDragOverTrash(note.id, x, y)
     },
-    onEnd(event) {
+    onEnd() {
       dragOrigin.current = null
-      onDrop(note.id, event.clientX, event.clientY)
+      onDrop(note.id)
     },
   })
 

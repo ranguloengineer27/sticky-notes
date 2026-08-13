@@ -171,7 +171,7 @@ describe('StickyNote', () => {
     expect(props.onDrag).toHaveBeenCalledWith(props.note.id, 70, 50)
   })
 
-  it('reports the pointer position over the trash zone while dragging', () => {
+  it('reports the note candidate position over the trash zone while dragging', () => {
     const props = renderStickyNote({
       note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
     })
@@ -188,10 +188,10 @@ describe('StickyNote', () => {
       clientY: 600,
     })
 
-    expect(props.onDragOverTrash).toHaveBeenCalledWith(900, 600)
+    expect(props.onDragOverTrash).toHaveBeenCalledWith(props.note.id, 840, 560)
   })
 
-  it('reports the drop position when the drag ends', () => {
+  it('reports the note id when the drag ends', () => {
     const props = renderStickyNote({
       note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
     })
@@ -208,7 +208,7 @@ describe('StickyNote', () => {
       clientY: 600,
     })
 
-    expect(props.onDrop).toHaveBeenCalledWith(props.note.id, 900, 600)
+    expect(props.onDrop).toHaveBeenCalledWith(props.note.id)
   })
 
   it('does not report trash position while resizing', () => {
