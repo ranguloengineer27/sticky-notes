@@ -21,8 +21,13 @@ function renderStickyNote(
     onBringToFront: vi.fn(),
     ...overrides,
   }
-  render(<StickyNote {...props} />)
-  return props
+  const { rerender } = render(<StickyNote {...props} />)
+  return {
+    ...props,
+    rerenderWithProps: (
+      nextOverrides: Partial<Parameters<typeof StickyNote>[0]>,
+    ) => rerender(<StickyNote {...props} {...nextOverrides} />),
+  }
 }
 
 describe('StickyNote', () => {
@@ -437,6 +442,78 @@ describe('StickyNote', () => {
     expect(props.onBringToFront).toHaveBeenCalledTimes(1)
     expect(props.onBringToFront).toHaveBeenCalledWith(props.note.id)
     expect(props.onDrag).not.toHaveBeenCalled()
+  })
+
+  it('shows the emoji picker toggle only while editing', () => {
+    renderStickyNote({ isEditing: false })
+
+    expect(
+      screen.queryByRole('button', { name: 'Insert emoji' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('inserts the selected emoji at the end of the description', () => {
+    const props = renderStickyNote({
+      note: buildNote({ content: { title: 'Groceries', description: 'Milk' } }),
+      isEditing: true,
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Insert emoji' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Insert 😀 emoji' }))
+
+    expect(props.onUpdate).toHaveBeenCalledWith(props.note.id, {
+      title: 'Groceries',
+      description: 'Milk😀',
+    })
+  })
+
+  it('inserts the selected emoji at the caret position', () => {
+    const props = renderStickyNote({
+      note: buildNote({ content: { title: 'Groceries', description: 'Milk' } }),
+      isEditing: true,
+    })
+    const textarea = screen.getByLabelText(
+      'Note description',
+    ) as HTMLTextAreaElement
+    textarea.setSelectionRange(2, 2)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Insert emoji' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Insert 😀 emoji' }))
+
+    expect(props.onUpdate).toHaveBeenCalledWith(props.note.id, {
+      title: 'Groceries',
+      description: 'Mi😀lk',
+    })
+  })
+
+  it('does not stop editing when the emoji picker toggle is clicked', () => {
+    const props = renderStickyNote({ isEditing: true })
+
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Insert emoji' }))
+
+    expect(props.onStopEditing).not.toHaveBeenCalled()
+  })
+
+  it('restores focus and caret position after the emoji is inserted into the description', () => {
+    const props = renderStickyNote({
+      note: buildNote({ content: { title: 'Groceries', description: 'Milk' } }),
+      isEditing: true,
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Insert emoji' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Insert 😀 emoji' }))
+
+    const updatedContent = vi.mocked(props.onUpdate).mock.calls[0][1]
+    props.rerenderWithProps({
+      note: { ...props.note, content: updatedContent },
+    })
+
+    const textarea = screen.getByLabelText(
+      'Note description',
+    ) as HTMLTextAreaElement
+    expect(textarea).toHaveFocus()
+    expect(textarea.selectionStart).toBe(updatedContent.description.length)
+    expect(textarea.selectionEnd).toBe(updatedContent.description.length)
   })
 
   it('stops editing when a pointer goes down outside the note', () => {

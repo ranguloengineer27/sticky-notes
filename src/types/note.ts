@@ -1,7 +1,8 @@
-import { NOTE_COLORS, RESIZE_CORNERS } from '../constants'
+import { NOTE_COLORS, RESIZE_CORNERS, EMOJI_OPTIONS } from '../constants'
 
 export type NoteColor = (typeof NOTE_COLORS)[number]
 export type ResizeCorner = (typeof RESIZE_CORNERS)[number]
+export type Emoji = (typeof EMOJI_OPTIONS)[number]
 
 export interface Position {
   x: number

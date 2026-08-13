@@ -4,6 +4,7 @@ import type {
   Note,
   NoteColor,
   Content,
+  Emoji,
   ResizeBounds,
   ResizeCorner,
   Size,
@@ -12,6 +13,8 @@ import { NOTE_COLORS, RESIZE_CORNERS } from '../../constants'
 import { usePointerDrag } from '../../hooks/usePointerDrag'
 import type { PointerDragHandlers } from '../../hooks/usePointerDrag'
 import { computeResizedBounds } from '../../utils/computeResizedBounds'
+import { insertTextAtSelection } from '../../utils/insertTextAtSelection'
+import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
 import styles from './StickyNote.module.scss'
 import { useClickOutside } from '../../hooks/useClickOutside'
 
@@ -55,6 +58,8 @@ export const StickyNote = memo(function StickyNote({
   const dragPosition = useRef<{ x: number; y: number } | null>(null)
   const resizeOrigin = useRef<ResizeBounds | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const editingContainerRef = useRef<HTMLDivElement>(null)
+  const pendingCaretPositionRef = useRef<number | null>(null)
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -65,7 +70,17 @@ export const StickyNote = memo(function StickyNote({
     }
   }, [isEditing])
 
-  useClickOutside(textareaRef, () => {
+  useEffect(() => {
+    const textarea = textareaRef.current
+    const caretPosition = pendingCaretPositionRef.current
+    if (caretPosition === null || !textarea) return
+
+    pendingCaretPositionRef.current = null
+    textarea.focus()
+    textarea.setSelectionRange(caretPosition, caretPosition)
+  }, [note.content.description])
+
+  useClickOutside(editingContainerRef, () => {
     if (!isEditing) return
     onStopEditing()
   })
@@ -173,6 +188,25 @@ export const StickyNote = memo(function StickyNote({
     resizeDragByCorner[corner].onPointerDown(event)
   }
 
+  function handleEmojiSelect(emoji: Emoji): void {
+    const textarea = textareaRef.current
+    const description = note.content.description
+    const selectionStart = textarea?.selectionStart ?? description.length
+    const selectionEnd = textarea?.selectionEnd ?? selectionStart
+
+    pendingCaretPositionRef.current = selectionStart + emoji.length
+
+    onUpdate(note.id, {
+      ...note.content,
+      description: insertTextAtSelection(
+        description,
+        emoji,
+        selectionStart,
+        selectionEnd,
+      ),
+    })
+  }
+
   return (
     <div
       className={styles.note}
@@ -188,18 +222,21 @@ export const StickyNote = memo(function StickyNote({
       onPointerDown={handlePointerDown}
     >
       {isEditing ? (
-        <textarea
-          ref={textareaRef}
-          className={styles.description}
-          aria-label="Note description"
-          value={note.content.description}
-          onChange={(event) =>
-            onUpdate(note.id, {
-              ...note.content,
-              description: event.target.value,
-            })
-          }
-        />
+        <div className={styles.editingContainer} ref={editingContainerRef}>
+          <textarea
+            ref={textareaRef}
+            className={styles.description}
+            aria-label="Note description"
+            value={note.content.description}
+            onChange={(event) =>
+              onUpdate(note.id, {
+                ...note.content,
+                description: event.target.value,
+              })
+            }
+          />
+          <EmojiPicker onSelect={handleEmojiSelect} />
+        </div>
       ) : (
         <>
           <div

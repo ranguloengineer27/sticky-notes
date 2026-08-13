@@ -35,3 +35,23 @@ export const DONT_SHOW_DELETE_CONFIRMATION_AGAIN_LABEL =
   "Don't show me this message again"
 export const CANCEL_DELETE_LABEL = 'Cancel'
 export const CONFIRM_DELETE_LABEL = 'Delete'
+
+export const EMOJI_OPTIONS = [
+  '😀',
+  '😂',
+  '😍',
+  '👍',
+  '🎉',
+  '❤️',
+  '🔥',
+  '✅',
+  '⭐',
+  '😢',
+  '🙏',
+  '🚀',
+] as const
+
+export const EMOJI_PICKER_TOGGLE_LABEL = 'Insert emoji'
+export const EMOJI_PICKER_PANEL_LABEL = 'Emoji picker'
+// Must match the --space-2 value in global.scss
+export const EMOJI_PICKER_PANEL_GAP_PX = 8
