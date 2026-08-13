@@ -45,15 +45,15 @@ All scripts can be run with your package manager of choice, e.g. `npm run <scrip
 
 - The Canvas component acts as the main container and does the following:
 
-  - Contains the Note components.
-  - Executes the `useNotes` hook and passes the notes state and event handlers to the Note components via props.
+  - Contains the StickyNote components.
+  - Executes the `useNotes` hook and passes the notes state and event handlers to the StickyNote components via props.
 
 - The `useNotes` hook does the following:
 
   - Holds the notes state and event handlers such as `onDrag`, `onResize`, `onUpdate`, and `onDelete`.
   - Uses the Notes Service to dispatch actions for creating, updating, and deleting notes.
   - Manages the "bring to top" functionality through a dedicated function.
-  - Passes the above data to the Note components.
+  - Passes the above data to the StickyNote components.
 
 - Auto-save functionality:
 
@@ -61,7 +61,7 @@ All scripts can be run with your package manager of choice, e.g. `npm run <scrip
   - Executes all queued actions after a 3-second buffer.
   - Saves the resulting data to LocalStorage when the buffer expires.
 
-- Note component:
+- StickyNote component:
 
   - Is a stateless component that receives state data and event handlers from the Canvas component.
   - Belongs to the presentation layer and is primarily responsible for rendering the UI.
