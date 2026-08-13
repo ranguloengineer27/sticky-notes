@@ -24,10 +24,9 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Install Playwright browser (${{ matrix.browser }})
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
