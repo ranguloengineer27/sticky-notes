@@ -4,7 +4,7 @@ import { Canvas } from '../../components/Canvas/Canvas'
 import * as notesService from '../../services/notesService'
 import { buildNote } from '../testUtils'
 import {
-  EMPTY_CANVAS_HINT_MIN_VISIBLE_MS,
+  EXIT_EDITING_HINT_VISIBLE_MS,
   POPOVER_EXIT_TRANSITION_MS,
 } from '../../constants'
 
@@ -190,7 +190,7 @@ describe('Canvas', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('keeps the hint visible for at least the minimum duration after creating the first note', () => {
+  it('switches to the exit-editing hint as soon as a note is created, since new notes enter edit mode immediately', () => {
     const { container } = render(<Canvas />)
     const canvas = container.firstChild as HTMLElement
     vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
@@ -207,22 +207,47 @@ describe('Canvas', () => {
 
     fireEvent.doubleClick(canvas, { clientX: 50, clientY: 50 })
 
-    const hint = screen.getByText(
-      'Double-click anywhere on the canvas to create a new note',
-    )
-    expect(hint).toBeInTheDocument()
+    expect(
+      screen.getByText('Click outside the note to exit editing mode'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        'Double-click anywhere on the canvas to create a new note',
+      ),
+    ).not.toBeInTheDocument()
+  })
+
+  it('hides the exit-editing hint for good after the minimum duration once the user stops editing', () => {
+    vi.spyOn(notesService, 'loadNotes').mockReturnValue([
+      buildNote({
+        id: 'a',
+        content: { title: 'Title', description: 'Description' },
+      }),
+    ])
+    render(<Canvas />)
+
+    fireEvent.doubleClick(screen.getByText('Description'))
+    expect(
+      screen.getByText('Click outside the note to exit editing mode'),
+    ).toBeInTheDocument()
+
+    fireEvent.pointerDown(document.body)
 
     act(() => {
-      vi.advanceTimersByTime(EMPTY_CANVAS_HINT_MIN_VISIBLE_MS)
+      vi.advanceTimersByTime(EXIT_EDITING_HINT_VISIBLE_MS)
     })
     act(() => {
       vi.advanceTimersByTime(POPOVER_EXIT_TRANSITION_MS)
     })
 
     expect(
-      screen.queryByText(
-        'Double-click anywhere on the canvas to create a new note',
-      ),
+      screen.queryByText('Click outside the note to exit editing mode'),
+    ).not.toBeInTheDocument()
+
+    fireEvent.doubleClick(screen.getByText('Description'))
+
+    expect(
+      screen.queryByText('Click outside the note to exit editing mode'),
     ).not.toBeInTheDocument()
   })
 })

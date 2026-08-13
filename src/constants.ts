@@ -16,9 +16,13 @@ export const RESIZE_CORNERS = [
   'bottom-right',
 ] as const
 
-export const EMPTY_CANVAS_HINT_MIN_VISIBLE_MS = 3500
+export const ONBOARDING_HINT_MIN_VISIBLE_MS = 3500
 export const EMPTY_CANVAS_HINT_MESSAGE =
   'Double-click anywhere on the canvas to create a new note'
+
+export const EXIT_EDITING_HINT_VISIBLE_MS = 3000
+export const EXIT_EDITING_HINT_MESSAGE =
+  'Click outside the note to exit editing mode'
 
 // Must match the --transition-popover duration in Popover.module.scss
 export const POPOVER_EXIT_TRANSITION_MS = 220

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Size } from '../../types/note'
 import { useNotes } from '../../hooks/useNotes'
-import { useEmptyCanvasHint } from '../../hooks/useEmptyCanvasHint'
+import { useOnboardingHint } from '../../hooks/useOnboardingHint'
 import { StickyNote } from '../StickyNote/StickyNote'
 import { TrashZone } from '../TrashZone/TrashZone'
 import { Popover } from '../Popover/Popover'
@@ -11,7 +11,6 @@ import { doRectsOverlap } from '../../utils/doRectsOverlap'
 import { findNoteById } from '../../utils/findNoteById'
 import { clampNotePosition } from '../../utils/clampNotePosition'
 import { getCanvasBounds } from '../../utils/getCanvasBounds'
-import { EMPTY_CANVAS_HINT_MESSAGE } from '../../constants'
 import styles from './Canvas.module.scss'
 
 export function Canvas() {
@@ -31,7 +30,10 @@ export function Canvas() {
     onStopEditing,
     onBringToFront,
   } = useNotes()
-  const isHintVisible = useEmptyCanvasHint(notes.length > 0)
+  const onboardingHint = useOnboardingHint(
+    notes.length > 0,
+    editingNoteId !== null,
+  )
 
   function handleDoubleClick(event: React.MouseEvent<HTMLDivElement>) {
     if (event.target !== event.currentTarget) return
@@ -102,7 +104,10 @@ export function Canvas() {
         />
       ))}
       <TrashZone ref={trashZoneRef} isActive={isTrashActive} />
-      <Popover message={EMPTY_CANVAS_HINT_MESSAGE} isOpen={isHintVisible} />
+      <Popover
+        message={onboardingHint.message}
+        isOpen={onboardingHint.isOpen}
+      />
     </div>
   )
 }

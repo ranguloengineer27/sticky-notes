@@ -8,7 +8,19 @@
       "Bash(node -e ' *)",
       "Bash(kill 85500)",
       "Bash(lsof -iTCP:5199 -sTCP:LISTEN -P)",
-      "Bash(awk 'NR>1{print $2}')"
+      "Bash(awk 'NR>1{print $2}')",
+      "Bash(curl -s \"http://localhost:5174/src/components/Canvas/Canvas.module.scss\")",
+      "Bash(kill %1)",
+      "Bash(jobs)",
+      "Bash(pkill -f \"5174\")",
+      "Bash(awk '{print $2}')",
+      "Bash(lsof -i :5174 -sTCP:LISTEN)",
+      "Bash(git -C /Users/roberto/projects/sticky-notes log --oneline -5 -- src/hooks/useOnboardingHint.ts src/hooks/useDelayedFlag.ts src/components/Popover)",
+      "Bash(git -C /Users/roberto/projects/sticky-notes show c653aee --stat)",
+      "Bash(git -C /Users/roberto/projects/sticky-notes show c653aee -- .claude/settings.json src/hooks/useEmptyCanvasHint.ts)",
+      "Bash(node -e \"require.resolve\\('puppeteer-core'\\)\")",
+      "Bash(node -e \"require.resolve\\('puppeteer'\\)\")",
+      "Bash(\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --disable-gpu --screenshot=\"/private/tmp/claude-501/-Users-roberto-projects-sticky-notes/9be95508-b3db-4a9d-8c53-a0c98115f55e/scratchpad/trash-color-check.png\" --window-size=400,220 --user-data-dir=\"/private/tmp/claude-501/-Users-roberto-projects-sticky-notes/9be95508-b3db-4a9d-8c53-a0c98115f55e/scratchpad/chrome-shot-profile2\" \"file:///private/tmp/claude-501/-Users-roberto-projects-sticky-notes/9be95508-b3db-4a9d-8c53-a0c98115f55e/scratchpad/trash-color-check.html\")"
     ]
   }
 }
