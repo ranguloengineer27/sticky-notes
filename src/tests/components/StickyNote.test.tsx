@@ -188,7 +188,11 @@ describe('StickyNote', () => {
       clientY: 600,
     })
 
-    expect(props.onDragOverTrash).toHaveBeenCalledWith(props.note.id, 840, 560)
+    expect(props.onDragOverTrash).toHaveBeenCalledWith(
+      840,
+      560,
+      props.note.size,
+    )
   })
 
   it('reports the note candidate position when the drag ends', () => {
@@ -213,7 +217,12 @@ describe('StickyNote', () => {
       clientY: 90,
     })
 
-    expect(props.onDrop).toHaveBeenCalledWith(props.note.id, 70, 50)
+    expect(props.onDrop).toHaveBeenCalledWith(
+      props.note.id,
+      70,
+      50,
+      props.note.size,
+    )
   })
 
   it('reports the note current position when the drag ends without any movement', () => {
@@ -233,7 +242,12 @@ describe('StickyNote', () => {
       clientY: 100,
     })
 
-    expect(props.onDrop).toHaveBeenCalledWith(props.note.id, 40, 60)
+    expect(props.onDrop).toHaveBeenCalledWith(
+      props.note.id,
+      40,
+      60,
+      props.note.size,
+    )
   })
 
   it('does not report trash position while resizing', () => {

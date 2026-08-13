@@ -55,8 +55,9 @@ describe('saveNotes', () => {
 
 describe('createNote', () => {
   it('creates a note with default size and color at the given position', () => {
-    const { notes, note } = createNote([], 50, 60)
+    const { notes, note } = createNote([], 'note-1', 50, 60)
 
+    expect(note.id).toBe('note-1')
     expect(note.position).toEqual({ x: 50, y: 60, zIndex: 1 })
     expect(note.size).toEqual({
       width: DEFAULT_NOTE_WIDTH,
@@ -72,7 +73,7 @@ describe('createNote', () => {
       buildNote({ id: 'a', position: { x: 0, y: 0, zIndex: 3 } }),
     ]
 
-    const { note } = createNote(existing, 0, 0)
+    const { note } = createNote(existing, 'note-2', 0, 0)
 
     expect(note.position.zIndex).toBe(4)
   })
@@ -80,7 +81,7 @@ describe('createNote', () => {
   it('does not mutate the input array', () => {
     const existing = [buildNote()]
 
-    createNote(existing, 0, 0)
+    createNote(existing, 'note-3', 0, 0)
 
     expect(existing).toHaveLength(1)
   })

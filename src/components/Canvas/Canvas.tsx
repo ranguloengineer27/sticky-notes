@@ -10,7 +10,6 @@ import { DeleteConfirmationModal } from '../DeleteConfirmationModal/DeleteConfir
 import type { Rect } from '../../utils/isPointInRect'
 import type { Point } from '../../utils/clampNotePosition'
 import { doRectsOverlap } from '../../utils/doRectsOverlap'
-import { findNoteById } from '../../utils/findNoteById'
 import { clampNotePosition } from '../../utils/clampNotePosition'
 import { getCanvasBounds } from '../../utils/getCanvasBounds'
 import styles from './Canvas.module.scss'
@@ -66,20 +65,14 @@ export function Canvas() {
     return isTouchingTrashZone(getNoteViewportRect(position, size))
   }
 
-  function handleDragOverTrash(id: string, x: number, y: number): void {
-    const note = findNoteById(notes, id)
-    if (!note) return
-
-    setIsTrashActive(isNoteTouchingTrashZone(x, y, note.size))
+  function handleDragOverTrash(x: number, y: number, size: Size): void {
+    setIsTrashActive(isNoteTouchingTrashZone(x, y, size))
   }
 
-  function handleDrop(id: string, x: number, y: number): void {
+  function handleDrop(id: string, x: number, y: number, size: Size): void {
     setIsTrashActive(false)
 
-    const note = findNoteById(notes, id)
-    if (!note) return
-
-    if (isNoteTouchingTrashZone(x, y, note.size)) {
+    if (isNoteTouchingTrashZone(x, y, size)) {
       deleteConfirmation.requestDelete(id)
     }
   }

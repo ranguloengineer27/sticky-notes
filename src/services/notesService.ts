@@ -31,12 +31,13 @@ export function saveNotes(notes: Note[]): void {
 
 export function createNote(
   notes: Note[],
+  id: string,
   x: number,
   y: number,
 ): CreateNoteResult {
   const zIndex = getNextZIndex(notes)
   const note: Note = {
-    id: crypto.randomUUID(),
+    id,
     position: { x, y, zIndex },
     size: { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT },
     color: DEFAULT_NOTE_COLOR,

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import type { PointerEvent } from 'react'
 import type {
   Note,
@@ -6,6 +6,7 @@ import type {
   Content,
   ResizeBounds,
   ResizeCorner,
+  Size,
 } from '../../types/note'
 import { NOTE_COLORS, RESIZE_CORNERS } from '../../constants'
 import { usePointerDrag } from '../../hooks/usePointerDrag'
@@ -21,8 +22,8 @@ export interface StickyNoteProps {
   onDrag: (id: string, x: number, y: number) => void
   onResize: (id: string, corner: ResizeCorner, bounds: ResizeBounds) => void
   onColorChange: (id: string, color: NoteColor) => void
-  onDragOverTrash: (id: string, x: number, y: number) => void
-  onDrop: (id: string, x: number, y: number) => void
+  onDragOverTrash: (x: number, y: number, size: Size) => void
+  onDrop: (id: string, x: number, y: number, size: Size) => void
   onStartEditing: (id: string) => void
   onStopEditing: () => void
   onBringToFront: (id: string) => void
@@ -37,7 +38,7 @@ function isInteractiveElement(target: EventTarget): boolean {
   )
 }
 
-export function StickyNote({
+export const StickyNote = memo(function StickyNote({
   note,
   isEditing,
   onUpdate,
@@ -79,7 +80,7 @@ export function StickyNote({
       dragPosition.current = { x, y }
 
       onDrag(note.id, x, y)
-      onDragOverTrash(note.id, x, y)
+      onDragOverTrash(x, y, note.size)
     },
     onEnd() {
       dragOrigin.current = null
@@ -89,7 +90,7 @@ export function StickyNote({
       }
       dragPosition.current = null
 
-      onDrop(note.id, position.x, position.y)
+      onDrop(note.id, position.x, position.y, note.size)
     },
   })
 
@@ -259,4 +260,4 @@ export function StickyNote({
       ))}
     </div>
   )
-}
+})
