@@ -49,5 +49,9 @@ test('deletes a note by dragging it to the trash zone', async ({ page }) => {
   )
   await page.mouse.up()
 
+  const confirmDeleteButton = page.getByRole('button', { name: 'Delete' })
+  await expect(confirmDeleteButton).toBeVisible()
+  await confirmDeleteButton.click()
+
   await expect(note).toHaveCount(0)
 })
