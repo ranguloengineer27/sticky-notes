@@ -11,6 +11,7 @@ import {
 describe('Canvas', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    sessionStorage.clear()
     vi.spyOn(notesService, 'loadNotes').mockReturnValue([])
     vi.spyOn(notesService, 'saveNotes').mockImplementation(() => {})
   })
@@ -102,10 +103,40 @@ describe('Canvas', () => {
       clientY: 630,
     })
 
-    expect(screen.queryByTestId('sticky-note')).not.toBeInTheDocument()
+    expect(trashZone.className).not.toMatch(/trashZoneActive/)
   })
 
-  it('deletes the note even when the drop happens before the last drag position has rendered', () => {
+  it('asks for confirmation instead of deleting immediately when a note is dropped on the trash zone', () => {
+    vi.spyOn(notesService, 'loadNotes').mockReturnValue([
+      buildNote({ id: 'a', position: { x: 0, y: 0, zIndex: 1 } }),
+    ])
+    render(<Canvas />)
+    mockTrashZoneRect()
+    const noteElement = screen.getByTestId('sticky-note')
+
+    fireEvent.pointerDown(noteElement, {
+      pointerId: 1,
+      clientX: 10,
+      clientY: 10,
+    })
+    fireEvent.pointerMove(document.body, {
+      pointerId: 1,
+      clientX: 930,
+      clientY: 630,
+    })
+    fireEvent.pointerUp(document.body, {
+      pointerId: 1,
+      clientX: 930,
+      clientY: 630,
+    })
+
+    expect(
+      screen.getByRole('dialog', { name: 'Delete note confirmation' }),
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('sticky-note')).toBeInTheDocument()
+  })
+
+  it('deletes the note once the user confirms deletion in the modal', () => {
     vi.spyOn(notesService, 'loadNotes').mockReturnValue([
       buildNote({ id: 'a', position: { x: 0, y: 0, zIndex: 1 } }),
     ])
@@ -131,6 +162,97 @@ describe('Canvas', () => {
       })
     })
 
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(screen.queryByTestId('sticky-note')).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('keeps the note when the user cancels deletion in the modal', () => {
+    vi.spyOn(notesService, 'loadNotes').mockReturnValue([
+      buildNote({ id: 'a', position: { x: 0, y: 0, zIndex: 1 } }),
+    ])
+    render(<Canvas />)
+    mockTrashZoneRect()
+    const noteElement = screen.getByTestId('sticky-note')
+
+    act(() => {
+      fireEvent.pointerDown(noteElement, {
+        pointerId: 1,
+        clientX: 10,
+        clientY: 10,
+      })
+      fireEvent.pointerMove(document.body, {
+        pointerId: 1,
+        clientX: 930,
+        clientY: 630,
+      })
+      fireEvent.pointerUp(document.body, {
+        pointerId: 1,
+        clientX: 930,
+        clientY: 630,
+      })
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.getByTestId('sticky-note')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('skips the confirmation modal on future deletes once "don\'t show again" is checked', () => {
+    vi.spyOn(notesService, 'loadNotes').mockReturnValue([
+      buildNote({ id: 'a', position: { x: 0, y: 0, zIndex: 1 } }),
+      buildNote({ id: 'b', position: { x: 300, y: 300, zIndex: 2 } }),
+    ])
+    render(<Canvas />)
+    mockTrashZoneRect()
+    const [firstNote, secondNote] = screen.getAllByTestId('sticky-note')
+
+    act(() => {
+      fireEvent.pointerDown(firstNote, {
+        pointerId: 1,
+        clientX: 10,
+        clientY: 10,
+      })
+      fireEvent.pointerMove(document.body, {
+        pointerId: 1,
+        clientX: 930,
+        clientY: 630,
+      })
+      fireEvent.pointerUp(document.body, {
+        pointerId: 1,
+        clientX: 930,
+        clientY: 630,
+      })
+    })
+
+    fireEvent.click(
+      screen.getByRole('checkbox', {
+        name: "Don't show me this message again",
+      }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    act(() => {
+      fireEvent.pointerDown(secondNote, {
+        pointerId: 2,
+        clientX: 310,
+        clientY: 310,
+      })
+      fireEvent.pointerMove(document.body, {
+        pointerId: 2,
+        clientX: 930,
+        clientY: 630,
+      })
+      fireEvent.pointerUp(document.body, {
+        pointerId: 2,
+        clientX: 930,
+        clientY: 630,
+      })
+    })
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.queryByTestId('sticky-note')).not.toBeInTheDocument()
   })
 

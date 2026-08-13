@@ -1,0 +1,42 @@
+.message {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-base);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.cancelButton,
+.deleteButton {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancelButton {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.deleteButton {
+  background-color: var(--color-trash-active);
+  border-color: var(--color-trash-active);
+  color: var(--color-surface);
+}

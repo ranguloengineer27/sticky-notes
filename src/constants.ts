@@ -26,3 +26,12 @@ export const EXIT_EDITING_HINT_MESSAGE =
 
 // Must match the --transition-popover duration in Popover.module.scss
 export const POPOVER_EXIT_TRANSITION_MS = 220
+
+export const SKIP_DELETE_CONFIRMATION_STORAGE_KEY =
+  'sticky-notes-skip-delete-confirmation'
+export const DELETE_CONFIRMATION_MESSAGE =
+  'Are you sure you want to delete this note? This is a permanent action.'
+export const DONT_SHOW_DELETE_CONFIRMATION_AGAIN_LABEL =
+  "Don't show me this message again"
+export const CANCEL_DELETE_LABEL = 'Cancel'
+export const CONFIRM_DELETE_LABEL = 'Delete'

@@ -2,9 +2,11 @@ import { useRef, useState } from 'react'
 import type { Size } from '../../types/note'
 import { useNotes } from '../../hooks/useNotes'
 import { useOnboardingHint } from '../../hooks/useOnboardingHint'
+import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation'
 import { StickyNote } from '../StickyNote/StickyNote'
 import { TrashZone } from '../TrashZone/TrashZone'
 import { Popover } from '../Popover/Popover'
+import { DeleteConfirmationModal } from '../DeleteConfirmationModal/DeleteConfirmationModal'
 import type { Rect } from '../../utils/isPointInRect'
 import type { Point } from '../../utils/clampNotePosition'
 import { doRectsOverlap } from '../../utils/doRectsOverlap'
@@ -34,6 +36,7 @@ export function Canvas() {
     notes.length > 0,
     editingNoteId !== null,
   )
+  const deleteConfirmation = useDeleteConfirmation(onDelete)
 
   function handleDoubleClick(event: React.MouseEvent<HTMLDivElement>) {
     if (event.target !== event.currentTarget) return
@@ -77,7 +80,7 @@ export function Canvas() {
     if (!note) return
 
     if (isNoteTouchingTrashZone(x, y, note.size)) {
-      onDelete(id)
+      deleteConfirmation.requestDelete(id)
     }
   }
 
@@ -107,6 +110,11 @@ export function Canvas() {
       <Popover
         message={onboardingHint.message}
         isOpen={onboardingHint.isOpen}
+      />
+      <DeleteConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onCancel={deleteConfirmation.cancelDelete}
+        onConfirm={deleteConfirmation.confirmDelete}
       />
     </div>
   )

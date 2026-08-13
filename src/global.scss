@@ -7,6 +7,7 @@
   --color-trash-idle: #ffffff;
   --color-trash-active: #d92626;
   --color-canvas-dot: #d8d4cc;
+  --color-overlay: rgba(0, 0, 0, 0.45);
 
   --canvas-dot-spacing: 24px;
 
@@ -33,6 +34,7 @@
   --z-note-base: 1;
   --z-hint: 500;
   --z-trash-zone: 1000;
+  --z-modal: 2000;
 
   --transition-fast: 120ms ease;
   --transition-popover: 220ms ease;

@@ -6,10 +6,7 @@ import {
   DEFAULT_NOTE_COLOR,
 } from '../constants'
 import { getNextZIndex } from '../utils/getNextZIndex'
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
-}
+import { getErrorMessage } from '../utils/getErrorMessage'
 
 export function loadNotes(): Note[] {
   try {
