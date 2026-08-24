@@ -55,16 +55,16 @@ describe('saveNotes', () => {
 
 describe('createNote', () => {
   it('creates a note with default size and color at the given position', () => {
-    const { notes, note } = createNote([], 'note-1', 50, 60)
+    const notes = createNote([], 'note-1', 50, 60)
+    const note = notes.find((n) => n.id === 'note-1')
 
-    expect(note.id).toBe('note-1')
-    expect(note.position).toEqual({ x: 50, y: 60, zIndex: 1 })
-    expect(note.size).toEqual({
+    expect(note?.position).toEqual({ x: 50, y: 60, zIndex: 1 })
+    expect(note?.size).toEqual({
       width: DEFAULT_NOTE_WIDTH,
       height: DEFAULT_NOTE_HEIGHT,
     })
-    expect(note.color).toBe(DEFAULT_NOTE_COLOR)
-    expect(note.content).toEqual({ title: '', description: '' })
+    expect(note?.color).toBe(DEFAULT_NOTE_COLOR)
+    expect(note?.content).toEqual({ title: '', description: '' })
     expect(notes).toEqual([note])
   })
 
@@ -73,9 +73,10 @@ describe('createNote', () => {
       buildNote({ id: 'a', position: { x: 0, y: 0, zIndex: 3 } }),
     ]
 
-    const { note } = createNote(existing, 'note-2', 0, 0)
+    const notes = createNote(existing, 'note-2', 0, 0)
+    const note = notes.find((n) => n.id === 'note-2')
 
-    expect(note.position.zIndex).toBe(4)
+    expect(note?.position.zIndex).toBe(4)
   })
 
   it('does not mutate the input array', () => {
