@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Size } from '../../types/note'
 import type { ConnectionEdge } from '../../types/connection'
-import { useNotes } from '../../hooks/useNotes'
-import { useNoteConnections } from '../../hooks/useNoteConnections'
+import { useNoteLifecycle } from '../../hooks/useNoteLifecycle'
 import { useOnboardingHint } from '../../hooks/useOnboardingHint'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation'
 import { StickyNote } from '../StickyNote/StickyNote'
@@ -36,26 +35,18 @@ export function Canvas() {
     onStartEditing,
     onStopEditing,
     onBringToFront,
-  } = useNotes()
-  const {
     connections,
     activeNoteId,
     onActivateNote,
     onDeactivateNote,
     onCreateConnection,
-    onNoteDeleted,
-  } = useNoteConnections()
+  } = useNoteLifecycle()
   const onboardingHint = useOnboardingHint(
     notes.length > 0,
     editingNoteId !== null,
   )
 
-  function handleDeleteNote(id: string): void {
-    onDelete(id)
-    onNoteDeleted(id)
-  }
-
-  const deleteConfirmation = useDeleteConfirmation(handleDeleteNote)
+  const deleteConfirmation = useDeleteConfirmation(onDelete)
 
   function handleCreateConnection(
     sourceId: string,
