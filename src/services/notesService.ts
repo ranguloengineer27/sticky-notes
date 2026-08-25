@@ -1,4 +1,4 @@
-import type { Note, NoteChanges, CreateNoteResult } from '../types/note'
+import type { Note, NoteChanges } from '../types/note'
 import {
   STORAGE_KEY,
   DEFAULT_NOTE_WIDTH,
@@ -34,7 +34,7 @@ export function createNote(
   id: string,
   x: number,
   y: number,
-): CreateNoteResult {
+): Note[] {
   const zIndex = getNextZIndex(notes)
   const note: Note = {
     id,
@@ -43,7 +43,7 @@ export function createNote(
     color: DEFAULT_NOTE_COLOR,
     content: { title: '', description: '' },
   }
-  return { notes: [...notes, note], note }
+  return [...notes, note]
 }
 
 export function updateNote(

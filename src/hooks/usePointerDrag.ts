@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 
 interface DragOrigin {
@@ -21,12 +21,14 @@ export function usePointerDrag({
   onEnd,
 }: UsePointerDragOptions): PointerDragHandlers {
   const originRef = useRef<DragOrigin | null>(null)
-  const onMoveRef = useRef(onMove)
-  const onEndRef = useRef(onEnd)
 
-  useEffect(() => {
-    onMoveRef.current = onMove
-    onEndRef.current = onEnd
+  const handleMove = useEffectEvent(
+    (deltaX: number, deltaY: number, event: PointerEvent): void => {
+      onMove(deltaX, deltaY, event)
+    },
+  )
+  const handleEnd = useEffectEvent((event: PointerEvent): void => {
+    onEnd(event)
   })
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export function usePointerDrag({
       const origin = originRef.current
       if (!origin || origin.pointerId !== event.pointerId) return
 
-      onMoveRef.current(
+      handleMove(
         event.clientX - origin.startX,
         event.clientY - origin.startY,
         event,
@@ -46,7 +48,7 @@ export function usePointerDrag({
       if (!origin || origin.pointerId !== event.pointerId) return
 
       originRef.current = null
-      onEndRef.current(event)
+      handleEnd(event)
     }
 
     document.addEventListener('pointermove', handlePointerMove)

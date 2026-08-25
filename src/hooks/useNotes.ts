@@ -58,9 +58,8 @@ export function useNotes(): UseNotesResult {
     )
     const id = crypto.randomUUID()
 
-    setNotes(
-      (currentNotes) =>
-        createNote(currentNotes, id, position.x, position.y).notes,
+    setNotes((currentNotes) =>
+      createNote(currentNotes, id, position.x, position.y),
     )
     setEditingNoteId(id)
   }

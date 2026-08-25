@@ -38,8 +38,3 @@ export interface ResizeBounds {
   width: number
   height: number
 }
-
-export interface CreateNoteResult {
-  notes: Note[]
-  note: Note
-}

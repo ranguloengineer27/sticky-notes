@@ -28,7 +28,6 @@ export function DeleteConfirmationModal({
 
   function handleConfirm(): void {
     onConfirm(dontShowAgain)
-    setDontShowAgain(false)
   }
 
   return (
