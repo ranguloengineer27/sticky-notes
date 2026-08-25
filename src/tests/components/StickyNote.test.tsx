@@ -10,6 +10,7 @@ function renderStickyNote(
   const props = {
     note: buildNote(),
     isEditing: false,
+    isActive: false,
     onUpdate: vi.fn(),
     onDrag: vi.fn(),
     onResize: vi.fn(),
@@ -20,6 +21,9 @@ function renderStickyNote(
     onStartEditing: vi.fn(),
     onStopEditing: vi.fn(),
     onBringToFront: vi.fn(),
+    onActivate: vi.fn(),
+    onDeactivate: vi.fn(),
+    onCreateConnection: vi.fn(),
     ...overrides,
   }
   const { rerender } = render(<StickyNote {...props} />)
@@ -121,6 +125,7 @@ describe('StickyNote', () => {
     const props = {
       note: buildNote(),
       isEditing: false,
+      isActive: false,
       onUpdate: vi.fn(),
       onDrag: vi.fn(),
       onResize: vi.fn(),
@@ -131,6 +136,9 @@ describe('StickyNote', () => {
       onStartEditing: vi.fn(),
       onStopEditing: vi.fn(),
       onBringToFront: vi.fn(),
+      onActivate: vi.fn(),
+      onDeactivate: vi.fn(),
+      onCreateConnection: vi.fn(),
     }
     const { rerender } = render(<StickyNote {...props} />)
 
@@ -606,5 +614,126 @@ describe('StickyNote', () => {
     fireEvent.pointerDown(document.body)
 
     expect(props.onStopEditing).not.toHaveBeenCalled()
+  })
+
+  it('activates the note when it is clicked', () => {
+    const props = renderStickyNote({ isActive: false })
+
+    fireEvent.click(screen.getByTestId('sticky-note'))
+
+    expect(props.onActivate).toHaveBeenCalledWith(props.note.id)
+  })
+
+  it('deactivates an already active note when it is clicked again', () => {
+    const props = renderStickyNote({ isActive: true })
+
+    fireEvent.click(screen.getByTestId('sticky-note'))
+
+    expect(props.onDeactivate).toHaveBeenCalled()
+    expect(props.onActivate).not.toHaveBeenCalled()
+  })
+
+  it('does not activate the note after a drag', () => {
+    const props = renderStickyNote({
+      note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
+      isActive: false,
+    })
+    const noteElement = screen.getByTestId('sticky-note')
+
+    fireEvent.pointerDown(noteElement, {
+      pointerId: 1,
+      clientX: 100,
+      clientY: 100,
+    })
+    fireEvent.pointerMove(document.body, {
+      pointerId: 1,
+      clientX: 130,
+      clientY: 90,
+    })
+    fireEvent.pointerUp(document.body, {
+      pointerId: 1,
+      clientX: 130,
+      clientY: 90,
+    })
+    fireEvent.click(noteElement)
+
+    expect(props.onActivate).not.toHaveBeenCalled()
+  })
+
+  it('does not activate the note while it is being edited', () => {
+    const props = renderStickyNote({ isEditing: true, isActive: false })
+
+    fireEvent.click(screen.getByTestId('sticky-note'))
+
+    expect(props.onActivate).not.toHaveBeenCalled()
+  })
+
+  it('deactivates the note when a pointer goes down outside it', () => {
+    const props = renderStickyNote({ isActive: true })
+
+    fireEvent.pointerDown(document.body)
+
+    expect(props.onDeactivate).toHaveBeenCalled()
+  })
+
+  it('does not deactivate the note when a pointer goes down inside it', () => {
+    const props = renderStickyNote({ isActive: true })
+
+    fireEvent.pointerDown(screen.getByTestId('sticky-note'))
+
+    expect(props.onDeactivate).not.toHaveBeenCalled()
+  })
+
+  it('does not show connection handles when the note is not active', () => {
+    renderStickyNote({ isActive: false })
+
+    expect(
+      screen.queryByTestId('connection-handle-top'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows a connection handle on every edge when the note is active', () => {
+    renderStickyNote({ isActive: true })
+
+    expect(screen.getByTestId('connection-handle-top')).toBeInTheDocument()
+    expect(screen.getByTestId('connection-handle-right')).toBeInTheDocument()
+    expect(screen.getByTestId('connection-handle-bottom')).toBeInTheDocument()
+    expect(screen.getByTestId('connection-handle-left')).toBeInTheDocument()
+  })
+
+  it('hides connection handles while editing even if the note is active', () => {
+    renderStickyNote({ isActive: true, isEditing: true })
+
+    expect(
+      screen.queryByTestId('connection-handle-top'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('creates a connection from the clicked edge handle', () => {
+    const props = renderStickyNote({ isActive: true })
+
+    fireEvent.click(screen.getByTestId('connection-handle-right'))
+
+    expect(props.onCreateConnection).toHaveBeenCalledWith(
+      props.note.id,
+      'right',
+    )
+  })
+
+  it('does not start a drag when the pointer goes down on a connection handle', () => {
+    const props = renderStickyNote({
+      note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
+      isActive: true,
+    })
+    const handle = screen.getByTestId('connection-handle-right')
+
+    fireEvent.pointerDown(handle, { pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(document.body, {
+      pointerId: 1,
+      clientX: 130,
+      clientY: 90,
+    })
+
+    expect(props.onDrag).not.toHaveBeenCalled()
   })
 })

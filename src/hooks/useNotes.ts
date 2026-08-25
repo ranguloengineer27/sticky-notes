@@ -7,7 +7,12 @@ import type {
   ResizeCorner,
   Shape,
 } from '../types/note'
-import { createNote, updateNote, deleteNote } from '../services/notesService'
+import {
+  createNote,
+  updateNote,
+  deleteNote,
+  saveNotes,
+} from '../services/notesService'
 import { clampNoteSize } from '../utils/clampNoteSize'
 import { clampNotePosition } from '../utils/clampNotePosition'
 import { clampNotesToCanvas } from '../utils/clampNotesToCanvas'
@@ -24,7 +29,7 @@ const TOP_RESIZE_CORNERS: ResizeCorner[] = ['top-left', 'top-right']
 export interface UseNotesResult {
   notes: Note[]
   editingNoteId: string | null
-  onCreate: (x: number, y: number) => void
+  onCreate: (x: number, y: number) => string
   onUpdate: (id: string, content: Content) => void
   onColorChange: (id: string, color: NoteColor) => void
   onShapeChange: (id: string, shape: Shape) => void
@@ -40,7 +45,7 @@ export function useNotes(): UseNotesResult {
   const [notes, setNotes] = useState<Note[]>(loadInitialNotes)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
 
-  useAutoSave(notes)
+  useAutoSave(notes, saveNotes)
 
   useEffect(() => {
     function handleWindowResize(): void {
@@ -52,7 +57,7 @@ export function useNotes(): UseNotesResult {
     return () => window.removeEventListener('resize', handleWindowResize)
   }, [])
 
-  function onCreate(x: number, y: number): void {
+  function onCreate(x: number, y: number): string {
     const position = clampNotePosition(
       { x, y },
       { width: DEFAULT_NOTE_WIDTH, height: DEFAULT_NOTE_HEIGHT },
@@ -64,6 +69,8 @@ export function useNotes(): UseNotesResult {
       createNote(currentNotes, id, position.x, position.y),
     )
     setEditingNoteId(id)
+
+    return id
   }
 
   function onUpdate(id: string, content: Content): void {

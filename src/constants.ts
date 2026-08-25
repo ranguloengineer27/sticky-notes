@@ -66,3 +66,20 @@ export const NOTE_MENU_TOGGLE_LABEL = 'Note options'
 export const NOTE_MENU_PANEL_LABEL = 'Note options menu'
 export const CHANGE_COLOR_LABEL = 'Change note color'
 export const COLOR_PICKER_PANEL_LABEL = 'Color picker'
+
+export const CONNECTIONS_STORAGE_KEY = 'sticky-notes-connections'
+
+export const CONNECTION_EDGES = ['top', 'right', 'bottom', 'left'] as const
+
+// Gap, in pixels, between a source note and a note created from one of its edge handles.
+export const CONNECTION_NEW_NOTE_GAP_PX = 48
+
+export const CREATE_CONNECTED_NOTE_LABEL_BY_EDGE: Record<
+  (typeof CONNECTION_EDGES)[number],
+  string
+> = {
+  top: 'Create connected note above',
+  right: 'Create connected note to the right',
+  bottom: 'Create connected note below',
+  left: 'Create connected note to the left',
+}

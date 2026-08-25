@@ -1,17 +1,22 @@
 import { useRef, useState } from 'react'
 import type { Size } from '../../types/note'
+import type { ConnectionEdge } from '../../types/connection'
 import { useNotes } from '../../hooks/useNotes'
+import { useNoteConnections } from '../../hooks/useNoteConnections'
 import { useOnboardingHint } from '../../hooks/useOnboardingHint'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation'
 import { StickyNote } from '../StickyNote/StickyNote'
 import { TrashZone } from '../TrashZone/TrashZone'
 import { Popover } from '../Popover/Popover'
 import { DeleteConfirmationModal } from '../DeleteConfirmationModal/DeleteConfirmationModal'
+import { ConnectionsLayer } from '../ConnectionsLayer/ConnectionsLayer'
 import type { Rect } from '../../utils/isPointInRect'
 import type { Point } from '../../utils/clampNotePosition'
 import { doRectsOverlap } from '../../utils/doRectsOverlap'
 import { clampNotePosition } from '../../utils/clampNotePosition'
 import { getCanvasBounds } from '../../utils/getCanvasBounds'
+import { findNoteById } from '../../utils/findNoteById'
+import { computeConnectedNotePosition } from '../../utils/computeConnectedNotePosition'
 import styles from './Canvas.module.scss'
 
 export function Canvas() {
@@ -32,11 +37,37 @@ export function Canvas() {
     onStopEditing,
     onBringToFront,
   } = useNotes()
+  const {
+    connections,
+    activeNoteId,
+    onActivateNote,
+    onDeactivateNote,
+    onCreateConnection,
+    onNoteDeleted,
+  } = useNoteConnections()
   const onboardingHint = useOnboardingHint(
     notes.length > 0,
     editingNoteId !== null,
   )
-  const deleteConfirmation = useDeleteConfirmation(onDelete)
+
+  function handleDeleteNote(id: string): void {
+    onDelete(id)
+    onNoteDeleted(id)
+  }
+
+  const deleteConfirmation = useDeleteConfirmation(handleDeleteNote)
+
+  function handleCreateConnection(
+    sourceId: string,
+    edge: ConnectionEdge,
+  ): void {
+    const sourceNote = findNoteById(notes, sourceId)
+    if (!sourceNote) return
+
+    const position = computeConnectedNotePosition(sourceNote, edge)
+    const targetId = onCreate(position.x, position.y)
+    onCreateConnection(sourceId, targetId)
+  }
 
   function handleDoubleClick(event: React.MouseEvent<HTMLDivElement>) {
     if (event.target !== event.currentTarget) return
@@ -89,6 +120,7 @@ export function Canvas() {
           key={note.id}
           note={note}
           isEditing={note.id === editingNoteId}
+          isActive={note.id === activeNoteId}
           onUpdate={onUpdate}
           onDrag={onDrag}
           onResize={onResize}
@@ -99,8 +131,12 @@ export function Canvas() {
           onStartEditing={onStartEditing}
           onStopEditing={onStopEditing}
           onBringToFront={onBringToFront}
+          onActivate={onActivateNote}
+          onDeactivate={onDeactivateNote}
+          onCreateConnection={handleCreateConnection}
         />
       ))}
+      <ConnectionsLayer notes={notes} connections={connections} />
       <TrashZone ref={trashZoneRef} isActive={isTrashActive} />
       <Popover
         message={onboardingHint.message}

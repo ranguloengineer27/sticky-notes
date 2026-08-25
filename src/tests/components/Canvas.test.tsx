@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { Canvas } from '../../components/Canvas/Canvas'
 import * as notesService from '../../services/notesService'
+import * as connectionsService from '../../services/connectionsService'
 import { buildNote } from '../testUtils'
 import {
   EXIT_EDITING_HINT_VISIBLE_MS,
@@ -14,6 +15,8 @@ describe('Canvas', () => {
     sessionStorage.clear()
     vi.spyOn(notesService, 'loadNotes').mockReturnValue([])
     vi.spyOn(notesService, 'saveNotes').mockImplementation(() => {})
+    vi.spyOn(connectionsService, 'loadConnections').mockReturnValue([])
+    vi.spyOn(connectionsService, 'saveConnections').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -402,5 +405,66 @@ describe('Canvas', () => {
     expect(
       screen.queryByText('Click outside the note to exit editing mode'),
     ).not.toBeInTheDocument()
+  })
+
+  it('creates a connected note and an arrow when an edge handle is clicked', () => {
+    vi.spyOn(notesService, 'loadNotes').mockReturnValue([
+      buildNote({
+        id: 'a',
+        position: { x: 100, y: 100, zIndex: 1 },
+        size: { width: 200, height: 150 },
+      }),
+    ])
+    render(<Canvas />)
+
+    fireEvent.click(screen.getByText('Description'))
+    fireEvent.click(screen.getByTestId('connection-handle-right'))
+
+    expect(screen.getAllByTestId('sticky-note')).toHaveLength(2)
+    expect(screen.getByLabelText('Note description')).toBeInTheDocument()
+    expect(
+      document.querySelector('[data-testid^="connection-arrow-"]'),
+    ).not.toBeNull()
+  })
+
+  it("removes a note's connections once it is deleted", () => {
+    vi.spyOn(notesService, 'loadNotes').mockReturnValue([
+      buildNote({
+        id: 'a',
+        position: { x: 0, y: 0, zIndex: 1 },
+        size: { width: 200, height: 150 },
+      }),
+    ])
+    render(<Canvas />)
+    mockTrashZoneRect()
+
+    fireEvent.click(screen.getByText('Description'))
+    fireEvent.click(screen.getByTestId('connection-handle-right'))
+    fireEvent.pointerDown(document.body)
+
+    const [firstNote] = screen.getAllByTestId('sticky-note')
+
+    act(() => {
+      fireEvent.pointerDown(firstNote, {
+        pointerId: 1,
+        clientX: 10,
+        clientY: 10,
+      })
+      fireEvent.pointerMove(document.body, {
+        pointerId: 1,
+        clientX: 930,
+        clientY: 630,
+      })
+      fireEvent.pointerUp(document.body, {
+        pointerId: 1,
+        clientX: 930,
+        clientY: 630,
+      })
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(
+      document.querySelector('[data-testid^="connection-arrow-"]'),
+    ).toBeNull()
   })
 })

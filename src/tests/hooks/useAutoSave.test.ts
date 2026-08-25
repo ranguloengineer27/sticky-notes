@@ -16,7 +16,7 @@ describe('useAutoSave', () => {
   })
 
   it('does not save on initial mount', () => {
-    renderHook(() => useAutoSave([buildNote()], 3000))
+    renderHook(() => useAutoSave([buildNote()], notesService.saveNotes, 3000))
 
     vi.advanceTimersByTime(3000)
 
@@ -24,9 +24,12 @@ describe('useAutoSave', () => {
   })
 
   it('saves once, 3 seconds after the notes change', () => {
-    const { rerender } = renderHook(({ notes }) => useAutoSave(notes, 3000), {
-      initialProps: { notes: [buildNote()] },
-    })
+    const { rerender } = renderHook(
+      ({ notes }) => useAutoSave(notes, notesService.saveNotes, 3000),
+      {
+        initialProps: { notes: [buildNote()] },
+      },
+    )
 
     const updated = [
       buildNote({ content: { title: 'Updated', description: '' } }),
@@ -42,9 +45,12 @@ describe('useAutoSave', () => {
   })
 
   it('coalesces a burst of changes into a single save of the final state', () => {
-    const { rerender } = renderHook(({ notes }) => useAutoSave(notes, 3000), {
-      initialProps: { notes: [buildNote()] },
-    })
+    const { rerender } = renderHook(
+      ({ notes }) => useAutoSave(notes, notesService.saveNotes, 3000),
+      {
+        initialProps: { notes: [buildNote()] },
+      },
+    )
 
     const first = [buildNote({ content: { title: 'First', description: '' } })]
     rerender({ notes: first })
@@ -64,7 +70,7 @@ describe('useAutoSave', () => {
 
   it('cancels the pending save when unmounted before the delay elapses', () => {
     const { rerender, unmount } = renderHook(
-      ({ notes }) => useAutoSave(notes, 3000),
+      ({ notes }) => useAutoSave(notes, notesService.saveNotes, 3000),
       {
         initialProps: { notes: [buildNote()] },
       },

@@ -1,10 +1,9 @@
 import { useEffect, useRef } from 'react'
-import type { Note } from '../types/note'
-import { saveNotes } from '../services/notesService'
 import { AUTO_SAVE_DELAY_MS } from '../constants'
 
-export function useAutoSave(
-  notes: Note[],
+export function useAutoSave<T>(
+  data: T,
+  save: (data: T) => void,
   delayMs: number = AUTO_SAVE_DELAY_MS,
 ): void {
   const isFirstRun = useRef(true)
@@ -17,12 +16,12 @@ export function useAutoSave(
 
     const timeoutId = window.setTimeout(() => {
       try {
-        saveNotes(notes)
+        save(data)
       } catch (error) {
         console.error(error)
       }
     }, delayMs)
 
     return () => window.clearTimeout(timeoutId)
-  }, [notes, delayMs])
+  }, [data, delayMs, save])
 }

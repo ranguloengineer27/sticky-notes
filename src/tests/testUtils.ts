@@ -1,4 +1,5 @@
 import type { Note } from '../types/note'
+import type { Connection } from '../types/connection'
 import { DEFAULT_NOTE_COLOR } from '../constants'
 
 export function buildNote(overrides: Partial<Note> = {}): Note {
@@ -8,6 +9,17 @@ export function buildNote(overrides: Partial<Note> = {}): Note {
     size: { width: 200, height: 180 },
     color: DEFAULT_NOTE_COLOR,
     content: { title: 'Title', description: 'Description' },
+    ...overrides,
+  }
+}
+
+export function buildConnection(
+  overrides: Partial<Connection> = {},
+): Connection {
+  return {
+    id: 'connection-1',
+    sourceNoteId: 'note-1',
+    targetNoteId: 'note-2',
     ...overrides,
   }
 }

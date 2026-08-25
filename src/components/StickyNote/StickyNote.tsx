@@ -10,7 +10,13 @@ import type {
   Shape,
   Size,
 } from '../../types/note'
-import { DEFAULT_SHAPE, RESIZE_CORNERS } from '../../constants'
+import type { ConnectionEdge } from '../../types/connection'
+import {
+  DEFAULT_SHAPE,
+  RESIZE_CORNERS,
+  CONNECTION_EDGES,
+  CREATE_CONNECTED_NOTE_LABEL_BY_EDGE,
+} from '../../constants'
 import { usePointerDrag } from '../../hooks/usePointerDrag'
 import type { PointerDragHandlers } from '../../hooks/usePointerDrag'
 import { computeResizedBounds } from '../../utils/computeResizedBounds'
@@ -23,6 +29,7 @@ import { useClickOutside } from '../../hooks/useClickOutside'
 export interface StickyNoteProps {
   note: Note
   isEditing: boolean
+  isActive: boolean
   onUpdate: (id: string, content: Content) => void
   onDrag: (id: string, x: number, y: number) => void
   onResize: (id: string, corner: ResizeCorner, bounds: ResizeBounds) => void
@@ -33,6 +40,9 @@ export interface StickyNoteProps {
   onStartEditing: (id: string) => void
   onStopEditing: () => void
   onBringToFront: (id: string) => void
+  onActivate: (id: string) => void
+  onDeactivate: () => void
+  onCreateConnection: (sourceNoteId: string, edge: ConnectionEdge) => void
 }
 
 const INTERACTIVE_TAG_NAMES = ['INPUT', 'TEXTAREA', 'BUTTON']
@@ -60,6 +70,7 @@ function isResizeHandleElement(target: EventTarget): boolean {
 export const StickyNote = memo(function StickyNote({
   note,
   isEditing,
+  isActive,
   onUpdate,
   onDrag,
   onResize,
@@ -70,12 +81,17 @@ export const StickyNote = memo(function StickyNote({
   onStartEditing,
   onStopEditing,
   onBringToFront,
+  onActivate,
+  onDeactivate,
+  onCreateConnection,
 }: StickyNoteProps) {
   const dragOrigin = useRef<{ x: number; y: number } | null>(null)
   const dragPosition = useRef<{ x: number; y: number } | null>(null)
   const resizeOrigin = useRef<ResizeBounds | null>(null)
+  const hasDraggedRef = useRef(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const editingContainerRef = useRef<HTMLDivElement>(null)
+  const noteRef = useRef<HTMLDivElement>(null)
   const pendingCaretPositionRef = useRef<number | null>(null)
 
   const shape = note.shape ?? DEFAULT_SHAPE
@@ -104,11 +120,17 @@ export const StickyNote = memo(function StickyNote({
     onStopEditing()
   })
 
+  useClickOutside(noteRef, () => {
+    if (!isActive) return
+    onDeactivate()
+  })
+
   const dragHandlers = usePointerDrag({
     onMove(deltaX, deltaY) {
       const origin = dragOrigin.current
       if (!origin) return
 
+      hasDraggedRef.current = true
       const x = origin.x + deltaX
       const y = origin.y + deltaY
       dragPosition.current = { x, y }
@@ -179,13 +201,37 @@ export const StickyNote = memo(function StickyNote({
     'bottom-right': styles.resizeHandleBottomRight,
   }
 
+  const connectionHandleClassByEdge: Record<ConnectionEdge, string> = {
+    top: styles.connectionHandleTop,
+    right: styles.connectionHandleRight,
+    bottom: styles.connectionHandleBottom,
+    left: styles.connectionHandleLeft,
+  }
+
   function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
     onBringToFront(note.id)
 
     if (isInteractiveElement(event.target)) return
 
+    hasDraggedRef.current = false
     dragOrigin.current = { x: note.position.x, y: note.position.y }
     dragHandlers.onPointerDown(event)
+  }
+
+  function handleNoteClick(event: MouseEvent<HTMLDivElement>): void {
+    if (hasDraggedRef.current) {
+      hasDraggedRef.current = false
+      return
+    }
+    if (isEditing) return
+    if (isInteractiveElement(event.target)) return
+    if (isResizeHandleElement(event.target)) return
+
+    if (isActive) {
+      onDeactivate()
+      return
+    }
+    onActivate(note.id)
   }
 
   function handleNoteDoubleClick(event: MouseEvent<HTMLDivElement>): void {
@@ -238,6 +284,7 @@ export const StickyNote = memo(function StickyNote({
 
   return (
     <div
+      ref={noteRef}
       className={styles.note}
       data-testid="sticky-note"
       style={{
@@ -248,6 +295,7 @@ export const StickyNote = memo(function StickyNote({
         zIndex: note.position.zIndex,
       }}
       onPointerDown={handlePointerDown}
+      onClick={handleNoteClick}
       onDoubleClick={handleNoteDoubleClick}
     >
       {isEditing ? (
@@ -330,6 +378,21 @@ export const StickyNote = memo(function StickyNote({
           />
         ))}
       </div>
+
+      {isActive && !isEditing && (
+        <div className={styles.connectionHandlesWrapper}>
+          {CONNECTION_EDGES.map((edge) => (
+            <button
+              key={edge}
+              type="button"
+              data-testid={`connection-handle-${edge}`}
+              className={`${styles.connectionHandle} ${connectionHandleClassByEdge[edge]}`}
+              aria-label={CREATE_CONNECTED_NOTE_LABEL_BY_EDGE[edge]}
+              onClick={() => onCreateConnection(note.id, edge)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 })

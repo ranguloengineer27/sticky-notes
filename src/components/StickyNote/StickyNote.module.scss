@@ -170,3 +170,46 @@
   right: -5px;
   cursor: nwse-resize;
 }
+
+.connectionHandlesWrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.connectionHandle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background-color: var(--color-connection);
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.connectionHandleTop {
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.connectionHandleRight {
+  top: 50%;
+  right: -8px;
+  transform: translateY(-50%);
+}
+
+.connectionHandleBottom {
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.connectionHandleLeft {
+  top: 50%;
+  left: -8px;
+  transform: translateY(-50%);
+}
