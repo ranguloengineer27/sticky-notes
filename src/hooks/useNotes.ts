@@ -5,6 +5,7 @@ import type {
   Content,
   ResizeBounds,
   ResizeCorner,
+  Shape,
 } from '../types/note'
 import { createNote, updateNote, deleteNote } from '../services/notesService'
 import { clampNoteSize } from '../utils/clampNoteSize'
@@ -26,6 +27,7 @@ export interface UseNotesResult {
   onCreate: (x: number, y: number) => void
   onUpdate: (id: string, content: Content) => void
   onColorChange: (id: string, color: NoteColor) => void
+  onShapeChange: (id: string, shape: Shape) => void
   onDrag: (id: string, x: number, y: number) => void
   onResize: (id: string, corner: ResizeCorner, bounds: ResizeBounds) => void
   onDelete: (id: string) => void
@@ -70,6 +72,10 @@ export function useNotes(): UseNotesResult {
 
   function onColorChange(id: string, color: NoteColor): void {
     setNotes((currentNotes) => updateNote(currentNotes, id, { color }))
+  }
+
+  function onShapeChange(id: string, shape: Shape): void {
+    setNotes((currentNotes) => updateNote(currentNotes, id, { shape }))
   }
 
   function onDrag(id: string, x: number, y: number): void {
@@ -151,6 +157,7 @@ export function useNotes(): UseNotesResult {
     onCreate,
     onUpdate,
     onColorChange,
+    onShapeChange,
     onDrag,
     onResize,
     onDelete,

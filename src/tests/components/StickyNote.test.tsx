@@ -14,6 +14,7 @@ function renderStickyNote(
     onDrag: vi.fn(),
     onResize: vi.fn(),
     onColorChange: vi.fn(),
+    onShapeChange: vi.fn(),
     onDragOverTrash: vi.fn(),
     onDrop: vi.fn(),
     onStartEditing: vi.fn(),
@@ -55,6 +56,30 @@ describe('StickyNote', () => {
     await user.dblClick(screen.getByText(props.note.content.description))
 
     expect(props.onStartEditing).toHaveBeenCalledWith(props.note.id)
+  })
+
+  it('starts editing when the note shape container itself is double-clicked', () => {
+    const props = renderStickyNote({ isEditing: false })
+
+    fireEvent.doubleClick(screen.getByTestId('sticky-note-shape'))
+
+    expect(props.onStartEditing).toHaveBeenCalledWith(props.note.id)
+  })
+
+  it('does not start editing when a resize handle is double-clicked', () => {
+    const props = renderStickyNote({ isEditing: false })
+
+    fireEvent.doubleClick(screen.getByTestId('resize-handle-top-left'))
+
+    expect(props.onStartEditing).not.toHaveBeenCalled()
+  })
+
+  it('does not call onStartEditing again when the note is double-clicked while already editing', () => {
+    const props = renderStickyNote({ isEditing: true })
+
+    fireEvent.doubleClick(screen.getByTestId('sticky-note'))
+
+    expect(props.onStartEditing).not.toHaveBeenCalled()
   })
 
   it('starts editing when the edit button is clicked', () => {
@@ -100,6 +125,7 @@ describe('StickyNote', () => {
       onDrag: vi.fn(),
       onResize: vi.fn(),
       onColorChange: vi.fn(),
+      onShapeChange: vi.fn(),
       onDragOverTrash: vi.fn(),
       onDrop: vi.fn(),
       onStartEditing: vi.fn(),
@@ -280,12 +306,14 @@ describe('StickyNote', () => {
     expect(props.onDrop).not.toHaveBeenCalled()
   })
 
-  it('reports the selected color when a swatch is clicked', () => {
+  it('reports the selected color when an option in the note menu is picked', () => {
     const props = renderStickyNote({
       note: buildNote({ color: '#DE7373' }),
       isEditing: false,
     })
 
+    fireEvent.click(screen.getByRole('button', { name: 'Note options' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Change note color' }))
     fireEvent.click(
       screen.getByRole('button', { name: 'Set note color to #87E6AC' }),
     )
@@ -293,37 +321,48 @@ describe('StickyNote', () => {
     expect(props.onColorChange).toHaveBeenCalledWith(props.note.id, '#87E6AC')
   })
 
-  it('marks the note current color swatch as selected', () => {
-    renderStickyNote({
-      note: buildNote({ color: '#87E6AC' }),
-      isEditing: false,
-    })
-
-    expect(
-      screen.getByRole('button', { name: 'Set note color to #87E6AC' }),
-    ).toHaveAttribute('aria-pressed', 'true')
-    expect(
-      screen.getByRole('button', { name: 'Set note color to #DE7373' }),
-    ).toHaveAttribute('aria-pressed', 'false')
-  })
-
-  it('does not start a drag when the pointer goes down on a color swatch', () => {
+  it('does not start a drag when the pointer goes down on the note menu trigger, its chips, or a popover option', () => {
     const props = renderStickyNote({
       note: buildNote({ position: { x: 40, y: 60, zIndex: 1 } }),
       isEditing: false,
     })
-    const swatch = screen.getByRole('button', {
+
+    function expectNoDragOnPointerDown(
+      target: HTMLElement,
+      pointerId: number,
+    ): void {
+      fireEvent.pointerDown(target, { pointerId, clientX: 100, clientY: 100 })
+      fireEvent.pointerMove(document.body, {
+        pointerId,
+        clientX: 130,
+        clientY: 90,
+      })
+
+      expect(props.onDrag).not.toHaveBeenCalled()
+    }
+
+    const trigger = screen.getByRole('button', { name: 'Note options' })
+    expectNoDragOnPointerDown(trigger, 1)
+
+    fireEvent.click(trigger)
+    const colorChip = screen.getByRole('button', { name: 'Change note color' })
+    expectNoDragOnPointerDown(colorChip, 2)
+
+    fireEvent.click(colorChip)
+    const colorOption = screen.getByRole('button', {
       name: 'Set note color to #FCE477',
     })
+    expectNoDragOnPointerDown(colorOption, 3)
 
-    fireEvent.pointerDown(swatch, { pointerId: 1, clientX: 100, clientY: 100 })
-    fireEvent.pointerMove(document.body, {
-      pointerId: 1,
-      clientX: 130,
-      clientY: 90,
+    fireEvent.click(colorOption)
+    const shapeChip = screen.getByRole('button', { name: 'Change note shape' })
+    expectNoDragOnPointerDown(shapeChip, 4)
+
+    fireEvent.click(shapeChip)
+    const shapeOption = screen.getByRole('button', {
+      name: 'Set note shape to circle',
     })
-
-    expect(props.onDrag).not.toHaveBeenCalled()
+    expectNoDragOnPointerDown(shapeOption, 5)
   })
 
   it('does not start a drag when the pointer goes down on an editable field', () => {
@@ -442,6 +481,35 @@ describe('StickyNote', () => {
     expect(props.onBringToFront).toHaveBeenCalledTimes(1)
     expect(props.onBringToFront).toHaveBeenCalledWith(props.note.id)
     expect(props.onDrag).not.toHaveBeenCalled()
+  })
+
+  it('defaults to a square shape when the note has no shape set', () => {
+    renderStickyNote({
+      note: buildNote({ shape: undefined }),
+      isEditing: false,
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Note options' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Change note shape' }))
+
+    expect(
+      screen.getByRole('button', { name: 'Set note shape to square' }),
+    ).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('reports the selected shape when an option in the note menu is picked', () => {
+    const props = renderStickyNote({
+      note: buildNote({ shape: 'square' }),
+      isEditing: false,
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Note options' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Change note shape' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Set note shape to triangle' }),
+    )
+
+    expect(props.onShapeChange).toHaveBeenCalledWith(props.note.id, 'triangle')
   })
 
   it('shows the emoji picker toggle only while editing', () => {

@@ -1,8 +1,14 @@
-import { NOTE_COLORS, RESIZE_CORNERS, EMOJI_OPTIONS } from '../constants'
+import {
+  NOTE_COLORS,
+  RESIZE_CORNERS,
+  EMOJI_OPTIONS,
+  SHAPES,
+} from '../constants'
 
 export type NoteColor = (typeof NOTE_COLORS)[number]
 export type ResizeCorner = (typeof RESIZE_CORNERS)[number]
 export type Emoji = (typeof EMOJI_OPTIONS)[number]
+export type Shape = (typeof SHAPES)[number]
 
 export interface Position {
   x: number
@@ -26,10 +32,11 @@ export interface Note {
   size: Size
   color: NoteColor
   content: Content
+  shape?: Shape
 }
 
 export type NoteChanges = Partial<
-  Pick<Note, 'position' | 'size' | 'color' | 'content'>
+  Pick<Note, 'position' | 'size' | 'color' | 'content' | 'shape'>
 >
 
 export interface ResizeBounds {

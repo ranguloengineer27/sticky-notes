@@ -311,11 +311,13 @@ describe('Canvas', () => {
     ])
     render(<Canvas />)
 
+    fireEvent.click(screen.getByRole('button', { name: 'Note options' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Change note color' }))
     fireEvent.click(
       screen.getByRole('button', { name: 'Set note color to #BFBAFF' }),
     )
 
-    expect(screen.getByTestId('sticky-note')).toHaveStyle({
+    expect(screen.getByTestId('sticky-note-shape')).toHaveStyle({
       backgroundColor: '#BFBAFF',
     })
   })

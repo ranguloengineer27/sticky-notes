@@ -39,6 +39,9 @@
 
   --transition-fast: 120ms ease;
   --transition-popover: 220ms ease;
+
+  --shape-clip-circle: circle(closest-side);
+  --shape-clip-triangle: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
 * {

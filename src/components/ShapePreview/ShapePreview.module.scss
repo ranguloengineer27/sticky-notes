@@ -1,0 +1,17 @@
+.shapePreview {
+  width: 14px;
+  height: 14px;
+  background-color: var(--color-text-muted);
+}
+
+.shapeSquare {
+  border-radius: 2px;
+}
+
+.shapeCircle {
+  clip-path: var(--shape-clip-circle);
+}
+
+.shapeTriangle {
+  clip-path: var(--shape-clip-triangle);
+}

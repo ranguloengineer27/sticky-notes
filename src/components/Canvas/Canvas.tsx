@@ -26,6 +26,7 @@ export function Canvas() {
     onDrag,
     onResize,
     onColorChange,
+    onShapeChange,
     onDelete,
     onStartEditing,
     onStopEditing,
@@ -92,6 +93,7 @@ export function Canvas() {
           onDrag={onDrag}
           onResize={onResize}
           onColorChange={onColorChange}
+          onShapeChange={onShapeChange}
           onDragOverTrash={handleDragOverTrash}
           onDrop={handleDrop}
           onStartEditing={onStartEditing}

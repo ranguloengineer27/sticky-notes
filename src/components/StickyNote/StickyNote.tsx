@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef } from 'react'
-import type { PointerEvent } from 'react'
+import type { MouseEvent, PointerEvent } from 'react'
 import type {
   Note,
   NoteColor,
@@ -7,14 +7,16 @@ import type {
   Emoji,
   ResizeBounds,
   ResizeCorner,
+  Shape,
   Size,
 } from '../../types/note'
-import { NOTE_COLORS, RESIZE_CORNERS } from '../../constants'
+import { DEFAULT_SHAPE, RESIZE_CORNERS } from '../../constants'
 import { usePointerDrag } from '../../hooks/usePointerDrag'
 import type { PointerDragHandlers } from '../../hooks/usePointerDrag'
 import { computeResizedBounds } from '../../utils/computeResizedBounds'
 import { insertTextAtSelection } from '../../utils/insertTextAtSelection'
 import { EmojiPicker } from '../EmojiPicker/EmojiPicker'
+import { StickyNoteMenu } from '../StickyNoteMenu/StickyNoteMenu'
 import styles from './StickyNote.module.scss'
 import { useClickOutside } from '../../hooks/useClickOutside'
 
@@ -25,6 +27,7 @@ export interface StickyNoteProps {
   onDrag: (id: string, x: number, y: number) => void
   onResize: (id: string, corner: ResizeCorner, bounds: ResizeBounds) => void
   onColorChange: (id: string, color: NoteColor) => void
+  onShapeChange: (id: string, shape: Shape) => void
   onDragOverTrash: (x: number, y: number, size: Size) => void
   onDrop: (id: string, x: number, y: number, size: Size) => void
   onStartEditing: (id: string) => void
@@ -34,10 +37,23 @@ export interface StickyNoteProps {
 
 const INTERACTIVE_TAG_NAMES = ['INPUT', 'TEXTAREA', 'BUTTON']
 
+const SHAPE_CLASS_BY_SHAPE: Record<Shape, string> = {
+  square: styles.shapeSquare,
+  circle: styles.shapeCircle,
+  triangle: styles.shapeTriangle,
+}
+
 function isInteractiveElement(target: EventTarget): boolean {
   return (
     target instanceof HTMLElement &&
     INTERACTIVE_TAG_NAMES.includes(target.tagName)
+  )
+}
+
+function isResizeHandleElement(target: EventTarget): boolean {
+  return (
+    target instanceof HTMLElement &&
+    target.closest(`.${styles.resizeHandle}`) !== null
   )
 }
 
@@ -48,6 +64,7 @@ export const StickyNote = memo(function StickyNote({
   onDrag,
   onResize,
   onColorChange,
+  onShapeChange,
   onDragOverTrash,
   onDrop,
   onStartEditing,
@@ -60,6 +77,8 @@ export const StickyNote = memo(function StickyNote({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const editingContainerRef = useRef<HTMLDivElement>(null)
   const pendingCaretPositionRef = useRef<number | null>(null)
+
+  const shape = note.shape ?? DEFAULT_SHAPE
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -169,6 +188,16 @@ export const StickyNote = memo(function StickyNote({
     dragHandlers.onPointerDown(event)
   }
 
+  function handleNoteDoubleClick(event: MouseEvent<HTMLDivElement>): void {
+    event.stopPropagation()
+
+    if (isEditing) return
+    if (isInteractiveElement(event.target)) return
+    if (isResizeHandleElement(event.target)) return
+
+    onStartEditing(note.id)
+  }
+
   function captureResizeOrigin(): ResizeBounds {
     return {
       x: note.position.x,
@@ -216,37 +245,45 @@ export const StickyNote = memo(function StickyNote({
         top: note.position.y,
         width: note.size.width,
         height: note.size.height,
-        backgroundColor: note.color,
         zIndex: note.position.zIndex,
       }}
       onPointerDown={handlePointerDown}
+      onDoubleClick={handleNoteDoubleClick}
     >
       {isEditing ? (
-        <div className={styles.editingContainer} ref={editingContainerRef}>
-          <textarea
-            ref={textareaRef}
-            className={styles.description}
-            aria-label="Note description"
-            value={note.content.description}
-            onChange={(event) =>
-              onUpdate(note.id, {
-                ...note.content,
-                description: event.target.value,
-              })
-            }
-          />
+        <div className={styles.editingWrapper} ref={editingContainerRef}>
+          <div
+            className={`${styles.noteShape} ${SHAPE_CLASS_BY_SHAPE[shape]}`}
+            data-testid="sticky-note-shape"
+            style={{ backgroundColor: note.color }}
+          >
+            <textarea
+              ref={textareaRef}
+              className={styles.description}
+              aria-label="Note description"
+              value={note.content.description}
+              onChange={(event) =>
+                onUpdate(note.id, {
+                  ...note.content,
+                  description: event.target.value,
+                })
+              }
+            />
+          </div>
           <EmojiPicker onSelect={handleEmojiSelect} />
         </div>
       ) : (
         <>
           <div
-            className={styles.staticContent}
-            onDoubleClick={(e) => {
-              e.stopPropagation()
-              onStartEditing(note.id)
-            }}
+            className={`${styles.noteShape} ${SHAPE_CLASS_BY_SHAPE[shape]}`}
+            data-testid="sticky-note-shape"
+            style={{ backgroundColor: note.color }}
           >
-            <p className={styles.descriptionText}>{note.content.description}</p>
+            <div className={styles.staticContent}>
+              <p className={styles.descriptionText}>
+                {note.content.description}
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -270,31 +307,29 @@ export const StickyNote = memo(function StickyNote({
               />
             </svg>
           </button>
-          <div className={styles.colorSwatches}>
-            {NOTE_COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className={`${styles.colorSwatch} ${color === note.color ? styles.colorSwatchSelected : ''}`}
-                style={{ backgroundColor: color }}
-                aria-label={`Set note color to ${color}`}
-                aria-pressed={color === note.color}
-                onClick={() => onColorChange(note.id, color)}
-              />
-            ))}
+          <div className={styles.noteMenu}>
+            <StickyNoteMenu
+              color={note.color}
+              shape={shape}
+              onColorChange={(color) => onColorChange(note.id, color)}
+              onShapeChange={(selectedShape) =>
+                onShapeChange(note.id, selectedShape)
+              }
+            />
           </div>
         </>
       )}
 
-      {RESIZE_CORNERS.map((corner) => (
-        <div
-          key={corner}
-          aria-hidden="true"
-          data-testid={`resize-handle-${corner}`}
-          className={`${styles.resizeHandle} ${resizeHandleClassByCorner[corner]}`}
-          onPointerDown={(event) => handleResizePointerDown(corner, event)}
-        />
-      ))}
+      <div className={styles.resizeHandlesWrapper} aria-hidden="true">
+        {RESIZE_CORNERS.map((corner) => (
+          <div
+            key={corner}
+            data-testid={`resize-handle-${corner}`}
+            className={`${styles.resizeHandle} ${resizeHandleClassByCorner[corner]}`}
+            onPointerDown={(event) => handleResizePointerDown(corner, event)}
+          />
+        ))}
+      </div>
     </div>
   )
 })

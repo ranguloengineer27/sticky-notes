@@ -55,3 +55,14 @@ export const EMOJI_PICKER_TOGGLE_LABEL = 'Insert emoji'
 export const EMOJI_PICKER_PANEL_LABEL = 'Emoji picker'
 // Must match the --space-2 value in global.scss
 export const EMOJI_PICKER_PANEL_GAP_PX = 8
+
+export const SHAPES = ['square', 'circle', 'triangle'] as const
+export const DEFAULT_SHAPE = SHAPES[0]
+
+export const SHAPES_MENU_TOGGLE_LABEL = 'Change note shape'
+export const SHAPES_MENU_PANEL_LABEL = 'Shape picker'
+
+export const NOTE_MENU_TOGGLE_LABEL = 'Note options'
+export const NOTE_MENU_PANEL_LABEL = 'Note options menu'
+export const CHANGE_COLOR_LABEL = 'Change note color'
+export const COLOR_PICKER_PANEL_LABEL = 'Color picker'

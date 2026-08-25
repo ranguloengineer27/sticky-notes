@@ -143,6 +143,18 @@ describe('useNotes', () => {
     expect(result.current.notes[0].color).toBe('#87E6AC')
   })
 
+  it('updates only the shape of the targeted note', () => {
+    const notes = [buildNote({ id: 'a', shape: 'square' })]
+    vi.spyOn(notesService, 'loadNotes').mockReturnValue(notes)
+    const { result } = renderHook(() => useNotes())
+
+    act(() => {
+      result.current.onShapeChange('a', 'circle')
+    })
+
+    expect(result.current.notes[0].shape).toBe('circle')
+  })
+
   it('moves a note while preserving its zIndex', () => {
     const notes = [buildNote({ id: 'a', position: { x: 0, y: 0, zIndex: 7 } })]
     vi.spyOn(notesService, 'loadNotes').mockReturnValue(notes)
