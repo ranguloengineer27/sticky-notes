@@ -1,23 +1,16 @@
-import { useRef, useState } from 'react'
-import type { Size } from '../../types/note'
+import { useRef } from 'react'
 import { useNotes } from '../../hooks/useNotes'
 import { useOnboardingHint } from '../../hooks/useOnboardingHint'
 import { useDeleteConfirmation } from '../../hooks/useDeleteConfirmation'
+import { useTrashZoneDrop } from '../../hooks/useTrashZoneDrop'
 import { StickyNote } from '../StickyNote/StickyNote'
 import { TrashZone } from '../TrashZone/TrashZone'
 import { Popover } from '../Popover/Popover'
 import { DeleteConfirmationModal } from '../DeleteConfirmationModal/DeleteConfirmationModal'
-import type { Rect } from '../../utils/isPointInRect'
-import type { Point } from '../../utils/clampNotePosition'
-import { doRectsOverlap } from '../../utils/doRectsOverlap'
-import { clampNotePosition } from '../../utils/clampNotePosition'
-import { getCanvasBounds } from '../../utils/getCanvasBounds'
 import styles from './Canvas.module.scss'
 
 export function Canvas() {
   const canvasRef = useRef<HTMLDivElement>(null)
-  const trashZoneRef = useRef<HTMLDivElement>(null)
-  const [isTrashActive, setIsTrashActive] = useState(false)
   const {
     notes,
     editingNoteId,
@@ -36,6 +29,11 @@ export function Canvas() {
     editingNoteId !== null,
   )
   const deleteConfirmation = useDeleteConfirmation(onDelete)
+  const { trashZoneRef, isTrashActive, handleDragOverTrash, handleDrop } =
+    useTrashZoneDrop({
+      canvasRef,
+      requestDelete: deleteConfirmation.requestDelete,
+    })
 
   function handleDoubleClick(event: React.MouseEvent<HTMLDivElement>) {
     if (event.target !== event.currentTarget) return
@@ -44,37 +42,6 @@ export function Canvas() {
     if (!rect) return
 
     onCreate(event.clientX - rect.left, event.clientY - rect.top)
-  }
-
-  function getNoteViewportRect(position: Point, size: Size): Rect | null {
-    const canvasRect = canvasRef.current?.getBoundingClientRect()
-    if (!canvasRect) return null
-
-    const left = canvasRect.left + position.x
-    const top = canvasRect.top + position.y
-    return { left, top, right: left + size.width, bottom: top + size.height }
-  }
-
-  function isTouchingTrashZone(rect: Rect | null): boolean {
-    const trashRect = trashZoneRef.current?.getBoundingClientRect()
-    return rect !== null && trashRect ? doRectsOverlap(rect, trashRect) : false
-  }
-
-  function isNoteTouchingTrashZone(x: number, y: number, size: Size): boolean {
-    const position = clampNotePosition({ x, y }, size, getCanvasBounds())
-    return isTouchingTrashZone(getNoteViewportRect(position, size))
-  }
-
-  function handleDragOverTrash(x: number, y: number, size: Size): void {
-    setIsTrashActive(isNoteTouchingTrashZone(x, y, size))
-  }
-
-  function handleDrop(id: string, x: number, y: number, size: Size): void {
-    setIsTrashActive(false)
-
-    if (isNoteTouchingTrashZone(x, y, size)) {
-      deleteConfirmation.requestDelete(id)
-    }
   }
 
   return (
